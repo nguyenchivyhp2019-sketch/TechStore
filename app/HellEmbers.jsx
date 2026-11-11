@@ -1,33 +1,30 @@
-"use client";
-import { useEffect, useState } from "react";
+// Hạt lửa bay lên nền trang (server component, vị trí ngẫu nhiên giả theo chỉ số)
+const EMBERS = Array.from({ length: 24 }, (_, i) => {
+  const r = (n) => {
+    const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  return {
+    left: `${(r(1) * 100).toFixed(2)}%`,
+    size: `${(r(2) * 4 + 2).toFixed(1)}px`,
+    duration: `${(r(3) * 5 + 6).toFixed(1)}s`,
+    delay: `${(r(4) * 6).toFixed(1)}s`,
+  };
+});
 
 export default function HellEmbers() {
-  const [embers, setEmbers] = useState([]);
-
-  useEffect(() => {
-    // Tạo 30 hạt lửa ngẫu nhiên
-    const newEmbers = Array.from({ length: 30 }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      animationDuration: `${Math.random() * 5 + 5}s`,
-      animationDelay: `${Math.random() * 5}s`,
-      size: `${Math.random() * 4 + 2}px`,
-    }));
-    setEmbers(newEmbers);
-  }, []);
-
   return (
-    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden mix-blend-screen">
-      {embers.map((ember) => (
+    <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-0 overflow-hidden motion-reduce:hidden">
+      {EMBERS.map((e, i) => (
         <div
-          key={ember.id}
+          key={i}
           className="absolute bottom-[-10px] bg-orange-500 rounded-full blur-[1px] opacity-0 animate-ember"
           style={{
-            left: ember.left,
-            width: ember.size,
-            height: ember.size,
-            animationDuration: ember.animationDuration,
-            animationDelay: ember.animationDelay,
+            left: e.left,
+            width: e.size,
+            height: e.size,
+            animationDuration: e.duration,
+            animationDelay: e.delay,
             boxShadow: "0 0 10px 2px rgba(239, 68, 68, 0.8)",
           }}
         />

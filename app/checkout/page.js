@@ -110,7 +110,7 @@ export default function CheckoutPage() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
         <div className="bg-[#111] p-10 shadow-[0_0_30px_rgba(220,38,38,0.2)] w-full max-w-md border border-[#333] text-center" style={{ clipPath: CUT_CARD }}>
           <div className="w-20 h-20 bg-red-950/30 border border-red-700 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_15px_rgba(220,38,38,0.5)]">
             <Lock size={40} />
@@ -120,13 +120,13 @@ export default function CheckoutPage() {
           <Link href="/login?redirect=/checkout" className="block w-full bg-red-800 hover:bg-red-700 text-white font-bold py-3 transition-colors mb-3 border border-red-600">Đăng nhập ngay</Link>
           <Link href="/cart" className="block w-full bg-[#222] hover:bg-[#333] text-gray-300 font-medium py-3 transition-colors border border-[#444]">Quay lại giỏ hàng</Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (order) {
     return (
-      <main className="min-h-screen bg-[#050505] py-12 px-4">
+      <div className="min-h-screen bg-[#050505] py-12 px-4">
         <div className="max-w-2xl mx-auto bg-[#111] p-8 shadow-[0_0_30px_rgba(220,38,38,0.2)] border border-[#333] text-center" style={{ clipPath: CUT_CARD }}>
           <div className="w-20 h-20 bg-green-950/30 border border-green-700 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_15px_rgba(34,197,94,0.5)]">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
@@ -162,22 +162,22 @@ export default function CheckoutPage() {
             <Link href="/products" className="bg-[#222] hover:bg-[#333] text-gray-300 font-bold px-8 py-3 transition-colors border border-[#444]">Tiếp tục mua sắm</Link>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-4">
         <ShieldAlert size={64} className="text-red-500 mb-6 opacity-50" />
-        <p className="text-gray-400 mb-6 text-xl font-bold uppercase tracking-wider">Kho vũ khí của bạn đang trống.</p>
+        <p className="text-gray-400 mb-6 text-xl font-bold uppercase tracking-wider">Giỏ hàng của bạn đang trống.</p>
         <Link href="/products" className="bg-red-800 hover:bg-red-700 text-white px-8 py-3 font-bold transition-colors border border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)]">Trang bị ngay</Link>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] py-12 px-4">
+    <div className="min-h-screen bg-[#050505] py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <Link href="/cart" className="text-sm text-gray-500 hover:text-red-500 mb-6 inline-flex items-center gap-2 font-bold uppercase tracking-wider transition-colors">
           <ArrowLeft size={16} /> Quay lại giỏ hàng
@@ -190,16 +190,16 @@ export default function CheckoutPage() {
             </h1>
             <form onSubmit={handleSubmit} className="space-y-4 font-sans">
               <div>
-                <label className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Họ và tên</label>
-                <input name="name" required placeholder="VD: Nguyễn Văn A" className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
+                <label htmlFor="name" className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Họ và tên</label>
+                <input id="name" name="name" required maxLength={150} autoComplete="name" placeholder="VD: Nguyễn Văn A" className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Số điện thoại</label>
-                <input name="phone" required placeholder="VD: 0987654321" className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
+                <label htmlFor="phone" className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Số điện thoại</label>
+                <input id="phone" name="phone" type="tel" inputMode="tel" required autoComplete="tel" pattern="(0|\+84)[0-9 ]{9,12}" title="Số điện thoại 10 số, bắt đầu bằng 0 hoặc +84" placeholder="VD: 0987654321" className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Địa chỉ nhận hàng</label>
-                <input name="address" required placeholder="Số nhà, tên đường, quận/huyện..." className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
+                <label htmlFor="address" className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Địa chỉ nhận hàng</label>
+                <input id="address" name="address" required maxLength={1000} autoComplete="street-address" placeholder="Số nhà, tên đường, quận/huyện..." className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
               </div>
               
               {error && <p className="text-red-500 text-sm font-bold bg-red-950/30 p-3 border border-red-900">{error}</p>}
@@ -236,6 +236,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

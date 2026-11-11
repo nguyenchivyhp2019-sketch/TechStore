@@ -1,106 +1,120 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
+import { ShoppingBag, Minus, Plus, Trash2, ArrowRight, ShieldCheck, Truck } from "lucide-react";
 import { useCart } from "../CartContext";
-
-const money = (n) => n.toLocaleString("vi-VN") + " đ";
+import ProductImage from "../ProductImage";
+import { formatPrice } from "@/lib/format";
+import { SITE } from "@/lib/site";
+import { CUT_CARD, CUT_BUTTON, pageTitle, btnPrimary, btnGhost } from "@/lib/ui";
 
 export default function CartPage() {
-  const { items, changeQty, removeItem, clear, total } = useCart();
+  const { items, changeQty, removeItem, clear, total, count } = useCart();
+  const [confirmClear, setConfirmClear] = useState(false);
 
-  // ==========================================
-  // TRƯỜNG HỢP 1: GIỎ HÀNG TRỐNG
-  // ==========================================
   if (items.length === 0) {
     return (
-      <main className="min-h-[80vh] flex flex-col items-center justify-center bg-white dark:bg-[#0a0a0a] px-4 transition-colors duration-300">
-        <div className="mb-6">
-          <img 
-            src="https://cdni.iconscout.com/illustration/premium/thumb/empty-cart-7359557-6024626.png" 
-            alt="Giỏ hàng trống" 
-            className="w-48 h-48 object-contain opacity-80"
-          />
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Giỏ hàng trống</h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">Không có sản phẩm nào trong giỏ hàng</p>
-        
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
+        <ShoppingBag size={72} strokeWidth={1.2} className="text-red-600 mb-6 drop-shadow-[0_0_15px_rgba(220,38,38,0.6)]" />
+        <h1 className={`${pageTitle} mb-2`}>Giỏ hàng trống</h1>
+        <p className="text-gray-500 mb-8">Bạn chưa chọn sản phẩm nào.</p>
         <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
-          <Link 
-            href="/products" 
-            className="bg-[#0071e3] hover:bg-[#0077ED] text-white font-medium px-8 py-3 rounded-xl w-full text-center transition-colors shadow-sm"
-          >
-            Về trang cửa hàng
+          <Link href="/products" className={`${btnPrimary} flex-1`} style={{ clipPath: CUT_BUTTON }}>
+            Mua sắm ngay
           </Link>
-          
-          {/* NÚT TRA CỨU ĐƠN HÀNG KHI GIỎ TRỐNG */}
-          <Link 
-            href="/track" 
-            className="bg-white dark:bg-[#1c1c1e] border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 font-medium px-8 py-3 rounded-xl w-full text-center transition-colors shadow-sm"
-          >
-            Tra cứu đơn hàng
-          </Link>
+          <Link href="/track" className={`${btnGhost} flex-1`}>Tra cứu đơn hàng</Link>
         </div>
-
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-8 text-center">
-          Khi cần trợ giúp vui lòng gọi <span className="text-[#0071e3] dark:text-blue-400 font-semibold">1900.232.460</span> (8h00 - 21h30)
+        <p className="text-sm text-gray-500 mt-10">
+          Cần hỗ trợ? Gọi <span className="text-red-500 font-bold">{SITE.hotline}</span> ({SITE.hours})
         </p>
-      </main>
+      </div>
     );
   }
 
-  // ==========================================
-  // TRƯỜNG HỢP 2: GIỎ HÀNG CÓ SẢN PHẨM
-  // ==========================================
   return (
-    <main className="max-w-4xl mx-auto p-6 min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0a] transition-colors duration-300">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white tracking-tight">Giỏ hàng của bạn</h1>
-      
-      <ul className="divide-y divide-gray-200 dark:divide-gray-800 border border-gray-200 dark:border-gray-800 rounded-2xl mb-6 bg-white dark:bg-[#1c1c1e] shadow-sm">
-        {items.map((i) => (
-          <li key={i.key} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <Link href={`/products/${i.id}`} className="font-semibold text-gray-900 dark:text-white hover:text-[#0071e3] dark:hover:text-blue-400 text-lg transition-colors">
-                {i.name}
+    <div className="max-w-6xl mx-auto px-4 py-10">
+      <h1 className={`${pageTitle} mb-8`}>
+        Giỏ hàng <span className="text-red-600">({count})</span>
+      </h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
+        <ul className="border border-[#2a2a2a] divide-y divide-[#2a2a2a] bg-[#0d0d0d]">
+          {items.map((i) => (
+            <li key={i.key} className="p-4 sm:p-5 flex gap-4">
+              <Link href={`/products/${i.id}`} className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 border border-gray-800">
+                <ProductImage id={i.id} name={i.name} imageUrl={i.image} className="w-full h-full" />
               </Link>
-              
-              {/* HIỂN THỊ PHIÊN BẢN & MÀU SẮC */}
-              <div className="mt-2 flex flex-wrap gap-2">
-                {i.label && <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded-md">Phiên bản: {i.label}</span>}
-                {i.color && <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded-md">Màu sắc: {i.color}</span>}
-              </div>
 
-              <p className="text-red-600 dark:text-red-400 font-bold mt-2 text-lg">{money(i.price)}</p>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-                <button onClick={() => changeQty(i.key, -1)} className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-bold text-gray-600 dark:text-gray-300">−</button>
-                <span className="px-3 py-1.5 bg-white dark:bg-[#1c1c1e] font-medium text-gray-900 dark:text-white">{i.qty}</span>
-                <button onClick={() => changeQty(i.key, 1)} className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-bold text-gray-600 dark:text-gray-300">+</button>
-              </div>
-              <button onClick={() => removeItem(i.key)} className="text-red-500 hover:text-red-700 text-sm font-medium">Xóa</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+              <div className="flex-1 min-w-0 flex flex-col">
+                <Link href={`/products/${i.id}`} className="font-bold text-gray-100 hover:text-red-500 transition-colors line-clamp-2">
+                  {i.name}
+                </Link>
+                {(i.label || i.color) && (
+                  <p className="text-xs text-gray-500 mt-1">{[i.label, i.color].filter(Boolean).join(" · ")}</p>
+                )}
+                <p className="text-sm text-gray-400 mt-1">{formatPrice(i.price)}</p>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-200 dark:border-gray-800 pt-6">
-        <p className="text-xl font-bold text-gray-900 dark:text-white">Tổng cộng: <span className="text-red-600 dark:text-red-400 text-2xl">{money(total)}</span></p>
-        
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <button onClick={clear} className="border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl flex-1 sm:flex-none transition-colors font-medium">
-            Xóa hết
+                <div className="mt-auto pt-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center border border-[#333]">
+                    <button type="button" aria-label="Giảm số lượng" onClick={() => changeQty(i.key, -1)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-950/30">
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-9 text-center text-sm font-bold text-white">{i.qty}</span>
+                    <button type="button" aria-label="Tăng số lượng" onClick={() => changeQty(i.key, 1)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-950/30">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="font-black text-red-500">{formatPrice(i.price * i.qty)}</span>
+                    <button type="button" aria-label={`Xóa ${i.name}`} onClick={() => removeItem(i.key)} className="text-gray-500 hover:text-red-500 transition-colors">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <aside className="lg:sticky lg:top-28 bg-[#111] border border-[#333] p-6" style={{ clipPath: CUT_CARD }}>
+          <h2 className="text-lg font-black uppercase tracking-wide text-white border-b border-[#333] pb-3 mb-4">Tóm tắt đơn hàng</h2>
+          <dl className="space-y-2 text-sm">
+            <div className="flex justify-between text-gray-400">
+              <dt>Tạm tính ({count} sản phẩm)</dt>
+              <dd>{formatPrice(total)}</dd>
+            </div>
+            <div className="flex justify-between text-gray-400">
+              <dt>Phí vận chuyển</dt>
+              <dd className="text-green-500">Miễn phí</dd>
+            </div>
+            <div className="flex justify-between items-baseline border-t border-[#333] pt-3 mt-3">
+              <dt className="font-bold text-gray-200">Tổng cộng</dt>
+              <dd className="text-2xl font-black text-red-500">{formatPrice(total)}</dd>
+            </div>
+          </dl>
+
+          <Link href="/checkout" className={`${btnPrimary} w-full mt-6 py-4`} style={{ clipPath: CUT_BUTTON }}>
+            Tiến hành đặt hàng <ArrowRight size={18} />
+          </Link>
+          <Link href="/products" className="block text-center text-sm text-gray-400 hover:text-red-500 mt-4 transition-colors">
+            Tiếp tục mua sắm
+          </Link>
+
+          <ul className="mt-6 pt-4 border-t border-[#333] space-y-2 text-xs text-gray-500">
+            <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-red-600" /> Hàng chính hãng, bảo hành đầy đủ</li>
+            <li className="flex items-center gap-2"><Truck size={14} className="text-red-600" /> Miễn phí giao hàng toàn quốc</li>
+          </ul>
+
+          <button
+            type="button"
+            onClick={() => (confirmClear ? clear() : setConfirmClear(true))}
+            onBlur={() => setConfirmClear(false)}
+            className={`w-full mt-6 text-xs font-bold uppercase tracking-wider transition-colors ${confirmClear ? "text-red-500" : "text-gray-600 hover:text-gray-400"}`}
+          >
+            {confirmClear ? "Bấm lần nữa để xóa toàn bộ giỏ hàng" : "Xóa toàn bộ giỏ hàng"}
           </button>
-          
-          {/* NÚT TRA CỨU ĐƠN HÀNG KHI CÓ SẢN PHẨM */}
-          <Link href="/track" className="border border-[#0071e3] dark:border-blue-500 text-[#0071e3] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-center px-6 py-3 rounded-xl font-medium flex-1 sm:flex-none transition-colors">
-            Tra cứu đơn
-          </Link>
-
-          <Link href="/checkout" className="bg-[#0071e3] hover:bg-[#0077ED] text-white text-center px-8 py-3 rounded-xl font-bold flex-1 sm:flex-none transition-colors shadow-md shadow-blue-600/20">
-            Đặt hàng
-          </Link>
-        </div>
+        </aside>
       </div>
-    </main>
+    </div>
   );
 }

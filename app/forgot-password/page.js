@@ -50,17 +50,18 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0a] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1c1c1e] p-8 rounded-3xl shadow-xl w-full max-w-md border border-gray-100 dark:border-gray-800">
-        <Link href="/login" className="text-gray-500 hover:text-black dark:hover:text-white flex items-center gap-2 mb-6 text-sm font-medium">
+    <div className="min-h-[80vh] bg-[radial-gradient(ellipse_at_center,rgba(127,29,29,0.3),transparent_65%)] flex items-center justify-center p-4">
+      <div className="relative w-full max-w-md bg-[#0b0b0b] border border-red-700/70 p-8 shadow-[0_0_60px_rgba(220,38,38,0.25)]">
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-red-600 to-transparent" />
+        <Link href="/login" className="text-gray-500 hover:text-red-500 flex items-center gap-2 mb-6 text-sm font-medium">
           <ArrowLeft size={16} /> Quay lại đăng nhập
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Quên mật khẩu</h1>
+        <h1 className="text-3xl font-black italic uppercase tracking-wide text-red-600 [text-shadow:0_0_20px_rgba(220,38,38,0.6)] mb-2">Quên mật khẩu</h1>
         <p className="text-gray-500 mb-6 text-sm">Nhập email đăng ký của bạn, chúng tôi sẽ gửi link để đặt lại mật khẩu.</p>
 
         <form onSubmit={handleReset} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <label htmlFor="email" className="block text-xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Email</label>
             <input
               id="email"
               type="email"
@@ -69,17 +70,17 @@ export default function ForgotPasswordPage() {
               required
               autoComplete="email"
               placeholder="Nhập email của bạn"
-              className="w-full border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 bg-transparent text-gray-900 dark:text-white focus:border-[#0071e3] outline-none"
+              className="w-full bg-black/70 border border-red-950 rounded-sm px-4 py-3 text-white placeholder-gray-600 outline-none transition-all focus:border-red-600 focus:shadow-[0_0_14px_rgba(220,38,38,0.45)]"
             />
           </div>
 
-          {error && <p role="alert" className="text-red-500 text-sm">{error}</p>}
-          {message && <p role="status" className="text-green-600 text-sm font-medium">{message}</p>}
+          {error && <p role="alert" className="border-l-2 border-red-600 bg-red-950/30 px-3 py-2 text-sm text-red-400">{error}</p>}
+          {message && <p role="status" className="border-l-2 border-green-500 bg-green-950/30 px-3 py-2 text-sm text-green-400">{message}</p>}
 
           <button
             type="submit"
             disabled={loading || cooldown > 0}
-            className="w-full bg-[#0071e3] hover:bg-[#0077ED] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50"
+            className="w-full border border-red-600 bg-red-950/40 py-3.5 text-sm font-black uppercase tracking-[0.2em] text-red-500 transition-all hover:bg-red-600 hover:text-white hover:shadow-[0_0_25px_rgba(220,38,38,0.6)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
               ? "Đang gửi..."
@@ -89,6 +90,6 @@ export default function ForgotPasswordPage() {
           </button>
         </form>
       </div>
-    </main>
+    </div>
   );
 }

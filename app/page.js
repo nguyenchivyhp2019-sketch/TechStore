@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getProducts, formatPrice } from "@/lib/products";
 import ProductImage from "./ProductImage";
+import ProductCard from "./ProductCard";
 import FadeIn from "./FadeIn";
 import {
   Flame, Crosshair, Laptop, Smartphone, Cpu, Headphones, Truck, ShieldCheck, RefreshCw, Headset, ArrowRight,
@@ -13,8 +14,8 @@ const CUT_CARD = "polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px)
 const CATEGORIES = [
   { slug: "laptop", label: "Laptop", desc: "Chiến binh hiệu năng", icon: Laptop },
   { slug: "dien-thoai", label: "Điện thoại", desc: "Vũ khí bỏ túi", icon: Smartphone },
-  { slug: "linh-kien", label: "Linh kiện", desc: "Độ lại sức mạnh", icon: Cpu },
-  { slug: "gear", label: "Gear", desc: "Phụ kiện chiến trường", icon: Headphones },
+  { slug: "linh-kien-pc", label: "Linh kiện PC", desc: "Độ lại sức mạnh", icon: Cpu },
+  { slug: "tai-nghe", label: "Tai nghe", desc: "Phụ kiện chiến trường", icon: Headphones },
 ];
 
 const PERKS = [
@@ -48,11 +49,21 @@ async function loadProducts() {
 
 export default async function HomePage() {
   const products = await loadProducts();
-  const flagged = products.filter((p) => p.featured);
-  const featuredProducts = (flagged.length >= 4 ? flagged : products).slice(0, 4);
+  const priced = products.filter((p) => p.price);
+  const flagged = priced.filter((p) => p.badge);
+  const featuredProducts = (flagged.length >= 4 ? flagged : priced).slice(0, 4);
+
+  // Mỗi danh mục lấy 2 sản phẩm để trang chủ đa dạng
+  const featuredIds = new Set(featuredProducts.map((p) => p.id));
+  const perCategory = {};
+  const newArrivals = priced.filter((p) => {
+    if (featuredIds.has(p.id) || (perCategory[p.category] ?? 0) >= 2) return false;
+    perCategory[p.category] = (perCategory[p.category] ?? 0) + 1;
+    return true;
+  }).slice(0, 10);
 
   return (
-    <main className="min-h-screen bg-[#050505] text-gray-200 font-sans selection:bg-red-600 selection:text-white">
+    <div className="text-gray-200">
       {/* 1. HERO */}
       <section className="relative text-center pt-16 pb-20 px-4 max-w-5xl mx-auto overflow-hidden">
         <div aria-hidden="true" className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-700/20 blur-[120px] rounded-full pointer-events-none -z-10 motion-safe:animate-pulse" />
@@ -137,7 +148,7 @@ export default async function HomePage() {
         {featuredProducts.length === 0 ? (
           <FadeIn>
             <div className="border border-dashed border-red-900 bg-red-950/10 py-16 text-center">
-              <p className="font-sans text-xl font-bold tracking-widest text-red-500 uppercase">Kho vũ khí đang nạp đạn</p>
+              <p className="font-sans text-xl font-bold tracking-widest text-red-500 uppercase">Đang cập nhật sản phẩm</p>
               <p className="mt-2 text-base text-gray-500">Chưa tải được sản phẩm. Vui lòng quay lại sau ít phút.</p>
             </div>
           </FadeIn>
@@ -182,7 +193,17 @@ export default async function HomePage() {
         </FadeIn>
       </section>
 
-      {/* 5. KÊU GỌI HÀNH ĐỘNG CUỐI TRANG */}
+      {/* 5. SẢN PHẨM THEO DANH MỤC */}
+      {newArrivals.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 pb-20">
+          <FadeIn><SectionTitle white="Gợi ý" red="Cho Bạn" /></FadeIn>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
+            {newArrivals.map((p) => <ProductCard key={p.id} p={p} />)}
+          </div>
+        </section>
+      )}
+
+      {/* 6. KÊU GỌI HÀNH ĐỘNG CUỐI TRANG */}
       <section className="px-4 pb-24">
         <FadeIn>
           <div className="relative max-w-4xl mx-auto text-center p-10 md:p-14 border border-red-700/60 bg-gradient-to-b from-[#1a0505] to-[#0a0a0a] shadow-[0_0_60px_rgba(220,38,38,0.2)]">
@@ -200,6 +221,6 @@ export default async function HomePage() {
           </div>
         </FadeIn>
       </section>
-    </main>
+    </div>
   );
 }

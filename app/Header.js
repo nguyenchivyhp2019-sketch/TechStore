@@ -5,12 +5,10 @@ import { usePathname } from "next/navigation";
 import { useCart } from "./CartContext";
 import { formatPrice } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
-import { Search, ShoppingBag, Menu, User, ArrowRight } from "lucide-react";
+import { Search, ShoppingBag, Menu, User, ArrowRight, X } from "lucide-react";
 
 const removeAccents = (str = "") =>
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
-
-const qLink = (text) => `/products?q=${encodeURIComponent(text)}`;
 
 const MENU_DATA = {
   Laptop: {
@@ -19,41 +17,45 @@ const MENU_DATA = {
       {
         title: "Khám phá Laptop",
         links: [
-          { name: "MacBook Air", href: qLink("MacBook Air") },
-          { name: "MacBook Pro", href: qLink("MacBook Pro") },
-          { name: "Laptop Gaming", href: qLink("Gaming") },
-          { name: "Laptop Văn phòng", href: qLink("Văn phòng") },
+          { name: "MacBook Air", href: "/products?category=laptop&q=MacBook%20Air" },
+          { name: "MacBook Pro", href: "/products?category=laptop&q=MacBook%20Pro" },
+          { name: "Laptop Gaming", href: "/products?category=laptop&q=gaming" },
         ],
       },
       {
-        title: "Mua sắm theo Hãng",
-        links: [
-          { name: "Apple", href: "/products?category=laptop&brand=Apple", subItems: [{ name: "MacBook Air", href: qLink("MacBook Air") }, { name: "MacBook Pro", href: qLink("MacBook Pro") }] },
-          { name: "ASUS", href: "/products?category=laptop&brand=ASUS" },
-          { name: "Dell", href: "/products?category=laptop&brand=Dell" },
-        ],
+        title: "Thương hiệu",
+        links: ["Apple", "ASUS", "Dell", "Lenovo", "HP", "Acer"].map((b) => ({
+          name: b,
+          href: `/products?category=laptop&brand=${b}`,
+        })),
       },
     ],
   },
   "Điện thoại": {
-    viewAll: qLink("Điện thoại"),
+    viewAll: "/products?category=dien-thoai",
     categories: [
       {
-        title: "Khám phá Điện thoại",
-        links: [
-          { name: "iPhone", href: qLink("iPhone"), subItems: [{ name: "iPhone 15", href: qLink("iPhone 15") }, { name: "iPhone 16", href: qLink("iPhone 16") }, { name: "iPhone 17", href: qLink("iPhone 17") }] },
-        ],
+        title: "iPhone",
+        links: ["iPhone 17", "iPhone 16", "iPhone 15"].map((n) => ({
+          name: n,
+          href: `/products?category=dien-thoai&q=${encodeURIComponent(n)}`,
+        })),
+      },
+      {
+        title: "Máy tính bảng",
+        links: [{ name: "iPad", href: "/products?category=may-tinh-bang" }],
       },
     ],
   },
   "Linh kiện": {
-    viewAll: qLink("Linh kiện"),
+    viewAll: "/products?category=linh-kien-pc",
     categories: [
       {
         title: "Linh kiện máy tính",
         links: [
-          { name: "Card màn hình (VGA)", href: qLink("VGA"), subItems: [{ name: "RTX 40 Series", href: qLink("RTX 40") }] },
-          { name: "RAM máy tính", href: qLink("RAM") },
+          { name: "Card màn hình RTX 40", href: "/products?category=linh-kien-pc&q=RTX%2040" },
+          { name: "Card màn hình RTX 50", href: "/products?category=linh-kien-pc&q=RTX%2050" },
+          { name: "RAM DDR4 / DDR5", href: "/products?category=linh-kien-pc&q=DDR" },
         ],
       },
     ],
@@ -64,7 +66,6 @@ const MENU_DATA = {
       {
         title: "Phân loại Loa",
         links: [
-          { name: "Tất cả Loa", href: "/products?category=loa" },
           { name: "Loa vi tính 2.0", href: "/products?category=loa&q=2.0" },
           { name: "Loa vi tính 2.1", href: "/products?category=loa&q=2.1" },
           { name: "Loa Bookshelf", href: "/products?category=loa&q=bookshelf" },
@@ -73,12 +74,10 @@ const MENU_DATA = {
       },
       {
         title: "Thương hiệu",
-        links: [
-          { name: "Logitech", href: "/products?category=loa&brand=Logitech" },
-          { name: "Edifier", href: "/products?category=loa&brand=Edifier" },
-          { name: "Creative", href: "/products?category=loa&brand=Creative" },
-          { name: "Microlab", href: "/products?category=loa&brand=Microlab" },
-        ],
+        links: ["Logitech", "Edifier", "Creative", "Microlab"].map((b) => ({
+          name: b,
+          href: `/products?category=loa&brand=${b}`,
+        })),
       },
     ],
   },
@@ -105,7 +104,16 @@ export default function Header({ products = [] }) {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => { setActiveMenu(null); setIsFocused(false); }, [pathname]);
+  const [mobileSearch, setMobileSearch] = useState(false);
+
+  // Đóng menu / gợi ý khi chuyển trang
+  const [prevPath, setPrevPath] = useState(pathname);
+  if (prevPath !== pathname) {
+    setPrevPath(pathname);
+    setActiveMenu(null);
+    setIsFocused(false);
+    setMobileSearch(false);
+  }
 
   useEffect(() => {
     return () => { if (menuTimeout.current) clearTimeout(menuTimeout.current); };
@@ -169,11 +177,11 @@ export default function Header({ products = [] }) {
 
         {/* Menu dùng font-sans thông thường */}
         <nav aria-label="Điều hướng chính" className="hidden lg:flex items-center gap-6 xl:gap-8 text-base font-bold uppercase tracking-wider text-gray-400 h-full font-sans">
-          <button type="button" onClick={() => setIsMenuOpen(true)} className={`${GLOW} transition-all py-5`}>
+          <button type="button" onClick={() => setIsMenuOpen(true)} className={`${GLOW} uppercase tracking-wider font-bold transition-all py-5`}>
             Danh mục
           </button>
           <Link href="/products" className={`${GLOW} transition-all py-5`}>
-            Kho vũ khí
+            Sản phẩm
           </Link>
 
           {menuNames.map((menuName) => {
@@ -199,14 +207,14 @@ export default function Header({ products = [] }) {
         </nav>
 
         <div className="flex items-center gap-3 md:gap-5 relative z-50">
-          <Link href="/products" aria-label="Tìm kiếm" className={`lg:hidden text-gray-400 ${GLOW} transition-all`}>
-            <Search size={26} strokeWidth={2.5} />
-          </Link>
+          <button type="button" aria-label="Tìm kiếm" aria-expanded={mobileSearch} onClick={() => setMobileSearch((v) => !v)} className={`lg:hidden text-gray-400 ${GLOW} transition-all`}>
+            {mobileSearch ? <X size={26} strokeWidth={2.5} /> : <Search size={26} strokeWidth={2.5} />}
+          </button>
 
           <div className="hidden lg:block relative" ref={searchRef}>
             <form action="/products" method="GET" onSubmit={() => setIsFocused(false)}>
               <input
-                type="search" name="q" value={query} onChange={handleSearch} onFocus={() => setIsFocused(true)} placeholder="Tìm vũ khí..." aria-label="Tìm kiếm sản phẩm"
+                type="search" name="q" value={query} onChange={handleSearch} onFocus={() => setIsFocused(true)} placeholder="Tìm sản phẩm..." aria-label="Tìm kiếm sản phẩm"
                 className="w-64 focus:w-80 bg-[#111] text-gray-200 text-base rounded-none pl-12 pr-4 py-2.5 border border-gray-700 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all duration-300 font-sans"
                 autoComplete="off"
               />
@@ -240,7 +248,7 @@ export default function Header({ products = [] }) {
                     })}
                   </ul>
                 ) : (
-                  <div className="p-4 text-center text-red-500 text-lg font-bold uppercase font-sans">Không tìm thấy vũ khí.</div>
+                  <div className="p-4 text-center text-red-500 text-lg font-bold uppercase font-sans">Không tìm thấy sản phẩm.</div>
                 )}
               </div>
             )}
@@ -261,6 +269,16 @@ export default function Header({ products = [] }) {
           </Link>
         </div>
       </div>
+
+      {mobileSearch && (
+        <form action="/products" method="GET" className="lg:hidden relative z-50 px-4 pb-4 -mt-1">
+          <input
+            type="search" name="q" autoFocus placeholder="Tìm sản phẩm..." aria-label="Tìm kiếm sản phẩm"
+            className="w-full bg-[#111] text-gray-200 pl-11 pr-4 py-3 border border-red-900 focus:outline-none focus:border-red-600"
+          />
+          <Search size={18} className="absolute left-8 top-3.5 text-gray-500 pointer-events-none" />
+        </form>
+      )}
 
       <div aria-hidden="true" className={`fixed inset-0 top-[82px] bg-black/90 z-40 transition-opacity duration-300 ${activeMenu ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`} onClick={() => setActiveMenu(null)} />
 

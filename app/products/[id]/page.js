@@ -1,146 +1,173 @@
 import { notFound } from "next/navigation";
-import { getProduct, formatPrice } from "@/lib/products";
 import Link from "next/link";
+import { getProduct, getCategories, formatPrice } from "@/lib/products";
 import AddToCart from "../../AddToCart";
 import ProductImage from "../../ProductImage";
 import FadeIn from "../../FadeIn";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Truck, ShieldCheck, RefreshCw, ChevronRight } from "lucide-react";
+import { CUT_CARD } from "@/lib/ui";
+
+const PERKS = [
+  { icon: Truck, title: "Miễn phí giao hàng", desc: "Toàn quốc, nhận hàng trong 2–3 ngày" },
+  { icon: ShieldCheck, title: "Bảo hành chính hãng", desc: "Theo chính sách của nhà sản xuất" },
+  { icon: RefreshCw, title: "Đổi trả 7 ngày", desc: "Nếu sản phẩm lỗi do nhà sản xuất" },
+];
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const p = await getProduct(id);
+  if (!p) notFound();
+  return {
+    title: p.name,
+    description: p.description?.slice(0, 160) || `Mua ${p.name} chính hãng tại DOOM Tech Store.`,
+  };
+}
 
 export default async function ProductPage({ params }) {
   const { id } = await params;
-  const p = await getProduct(id);
-  
+  const [p, categories] = await Promise.all([getProduct(id), getCategories()]);
   if (!p) notFound();
 
+  const category = categories.find((c) => c.slug === p.category);
+  const hasVariants = p.variants?.length > 0;
+  const inStock = p.stock == null || p.stock > 0;
+
   return (
-    <main className="max-w-6xl mx-auto px-4 md:px-8 py-10 min-h-screen bg-[#050505]">
-      
-      {/* Breadcrumb (Đường dẫn) */}
-      <FadeIn>
-        <nav className="text-xs text-gray-500 mb-8 space-x-2 font-bold uppercase tracking-widest">
-          <Link href="/" className="hover:text-red-500 transition-colors">Trang chủ</Link>
-          <span>/</span>
-          <Link href="/products" className="hover:text-red-500 transition-colors">Kho vũ khí</Link>
-          <span>/</span>
-          <span className="text-red-500">{p.name}</span>
-        </nav>
-      </FadeIn>
-      
-      {/* KHỐI TRÊN: ẢNH & THÔNG TIN MUA HÀNG */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-start mb-20">
-        
-        {/* Cột trái: Ảnh sản phẩm (Phong cách HUD quân sự) */}
-        <FadeIn delay={0.1}>
-          <div 
-            className="sticky top-24 bg-[#111] border border-gray-800 rounded-sm p-6 flex items-center justify-center min-h-[400px] md:min-h-[500px] shadow-[0_0_30px_rgba(220,38,38,0.1)] group hover:border-red-600 transition-colors duration-500"
-            style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%)' }}
+    <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-10">
+      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 mb-8 font-bold uppercase tracking-widest">
+        <Link href="/" className="hover:text-red-500 transition-colors">Trang chủ</Link>
+        <ChevronRight size={12} />
+        <Link href="/products" className="hover:text-red-500 transition-colors">Sản phẩm</Link>
+        {category && (
+          <>
+            <ChevronRight size={12} />
+            <Link href={`/products?category=${category.slug}`} className="hover:text-red-500 transition-colors">{category.name}</Link>
+          </>
+        )}
+        <ChevronRight size={12} />
+        <span className="text-red-500 normal-case tracking-normal line-clamp-1">{p.name}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-start mb-16">
+        <FadeIn>
+          <div
+            className="md:sticky md:top-28 bg-[#111] border border-gray-800 p-5 shadow-[0_0_30px_rgba(220,38,38,0.1)] hover:border-red-700 transition-colors duration-500"
+            style={{ clipPath: CUT_CARD }}
           >
-            <div className="w-full h-full bg-white p-4 rounded-sm border border-gray-700 group-hover:border-red-500 transition-colors">
-              <ProductImage 
-                id={p.id} 
-                category={p.category} 
-                name={p.name} 
-                imageSrc={p.image} 
-                imageUrl={p.image_url} // LẤY ẢNH TỪ SUPABASE STORAGE
-                className="w-full h-full max-h-[450px] object-contain drop-shadow-[0_0_20px_rgba(220,38,38,0.3)]" 
-              />
-            </div>
+            <ProductImage
+              id={p.id}
+              category={p.category}
+              name={p.name}
+              imageSrc={p.image}
+              imageUrl={p.image_url}
+              className="w-full aspect-square"
+            />
           </div>
         </FadeIn>
 
-        {/* Cột phải: Thông tin mua hàng */}
-        <FadeIn delay={0.2}>
-          <div className="flex flex-col pt-4">
-            {p.brand && <p className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2 italic">{"// "}{p.brand}{" //"}</p>}
-            
-            <h1 className="text-4xl md:text-5xl font-black mb-4 text-white uppercase italic tracking-tighter leading-tight drop-shadow-md">
-              {p.name}
-            </h1>
-            
-            <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 mb-8 drop-shadow-[0_0_10px_rgba(234,88,12,0.3)]">
-              {formatPrice(p.price)}
-            </p>
-            
-            {/* Component Thêm vào giỏ */}
-            <div className="mb-10 bg-[#111] p-6 border border-gray-800 rounded-sm relative">
-               <div className="absolute top-0 left-0 w-2 h-full bg-red-700"></div>
-               <AddToCart product={{ id: p.id, name: p.name, price: p.price, variants: p.variants, colors: p.colors }} />
+        <FadeIn delay={0.1}>
+          <div className="flex flex-col">
+            {p.brand && <p className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2">{p.brand}</p>}
+
+            <h1 className="text-3xl md:text-4xl font-black mb-4 text-white leading-tight">{p.name}</h1>
+
+            <div className="flex items-center gap-3 mb-6 text-sm">
+              <span className={`inline-flex items-center gap-1.5 font-bold ${inStock ? "text-green-500" : "text-gray-500"}`}>
+                <span className={`w-2 h-2 rounded-full ${inStock ? "bg-green-500" : "bg-gray-500"}`} />
+                {inStock ? "Còn hàng" : "Tạm hết hàng"}
+              </span>
+              {p.price_note && <span className="text-gray-500">· {p.price_note}</span>}
             </div>
 
-            {/* Ưu đãi */}
-            <div className="border-t border-gray-800 pt-6">
-              <div className="flex items-start gap-3 text-sm text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-                <div>
-                  <p className="font-bold text-gray-200 mb-1 uppercase tracking-wider">Giao hàng hỏa tốc</p>
-                  <p>Miễn phí vận chuyển toàn quốc. Nhận hàng trong 2-3 ngày.</p>
-                </div>
-              </div>
+            {!hasVariants && (
+              <p className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 mb-6">
+                {formatPrice(p.price)}
+              </p>
+            )}
+
+            <div className="mb-8 bg-[#111] p-6 border border-gray-800 relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-red-700" />
+              <AddToCart
+                product={{
+                  id: p.id,
+                  name: p.name,
+                  price: p.price,
+                  variants: p.variants,
+                  colors: p.colors,
+                  stock: p.stock,
+                  image: p.image_url || p.image || null,
+                }}
+              />
             </div>
+
+            <ul className="grid gap-4 border-t border-gray-800 pt-6">
+              {PERKS.map(({ icon: Icon, title, desc }) => (
+                <li key={title} className="flex items-start gap-3 text-sm">
+                  <Icon size={20} className="text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-gray-200">{title}</p>
+                    <p className="text-gray-500">{desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </FadeIn>
       </div>
 
-      {/* KHỐI DƯỚI: THÔNG TIN CHI TIẾT */}
-      <div className="border-t border-gray-800 pt-16 space-y-16 mb-24">
-        
-        {/* Mô tả */}
+      <div className="border-t border-gray-800 pt-12 space-y-14 mb-16">
         {p.description && (
           <FadeIn>
             <section className="max-w-3xl">
-              <h2 className="text-3xl font-black mb-6 text-white uppercase italic tracking-widest border-l-4 border-red-600 pl-4">
+              <h2 className="text-2xl md:text-3xl font-black mb-5 text-white uppercase italic tracking-wide border-l-4 border-red-600 pl-4">
                 Tổng quan
               </h2>
-              <p className="text-lg text-gray-400 leading-relaxed font-light">
-                {p.description}
-              </p>
+              <p className="text-base md:text-lg text-gray-400 leading-relaxed whitespace-pre-line">{p.description}</p>
             </section>
           </FadeIn>
         )}
 
-        {/* Thông số kỹ thuật */}
-        {p.specs && p.specs.length > 0 && (
+        {p.specs?.length > 0 && (
           <FadeIn>
             <section>
-              <h2 className="text-3xl font-black mb-8 text-white uppercase italic tracking-widest border-l-4 border-red-600 pl-4">
+              <h2 className="text-2xl md:text-3xl font-black mb-6 text-white uppercase italic tracking-wide border-l-4 border-red-600 pl-4">
                 Thông số <span className="text-red-600">kỹ thuật</span>
               </h2>
-              <div className="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                {p.specs.map((spec, index) => (
-                  <div key={index} className="flex flex-col border-b border-gray-800 pb-3 hover:border-red-900 transition-colors group">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 group-hover:text-red-500 transition-colors">{spec.label}</span>
-                    <span className="text-base text-gray-200 font-medium">{spec.value}</span>
+              <dl className="max-w-4xl border border-gray-800 divide-y divide-gray-800">
+                {p.specs.map((spec, i) => (
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-[220px_1fr] odd:bg-[#0d0d0d]">
+                    <dt className="px-4 pt-3 sm:py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{spec.label}</dt>
+                    <dd className="px-4 pb-3 sm:py-3 text-sm text-gray-200">{spec.value}</dd>
                   </div>
                 ))}
-              </div>
+              </dl>
             </section>
           </FadeIn>
         )}
 
-        {/* Ưu nhược điểm */}
         {(p.pros || p.cons) && (
           <FadeIn>
-            <section className="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section className="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
               {p.pros && (
-                <div className="bg-[#111] p-8 border border-gray-800 border-l-4 border-l-green-600 rounded-sm">
-                  <h3 className="text-lg font-bold text-gray-100 mb-4 flex items-center gap-2 uppercase tracking-wider">
+                <div className="bg-[#111] p-6 border border-gray-800 border-l-4 border-l-green-600">
+                  <h3 className="text-base font-bold text-gray-100 mb-3 flex items-center gap-2 uppercase tracking-wider">
                     <CheckCircle2 size={20} className="text-green-500" /> Ưu điểm
                   </h3>
-                  <p className="text-gray-400 leading-relaxed text-sm">{p.pros}</p>
+                  <p className="text-gray-400 leading-relaxed text-sm whitespace-pre-line">{p.pros}</p>
                 </div>
               )}
               {p.cons && (
-                <div className="bg-[#111] p-8 border border-gray-800 border-l-4 border-l-red-600 rounded-sm">
-                  <h3 className="text-lg font-bold text-gray-100 mb-4 flex items-center gap-2 uppercase tracking-wider">
+                <div className="bg-[#111] p-6 border border-gray-800 border-l-4 border-l-red-600">
+                  <h3 className="text-base font-bold text-gray-100 mb-3 flex items-center gap-2 uppercase tracking-wider">
                     <XCircle size={20} className="text-red-500" /> Nhược điểm
                   </h3>
-                  <p className="text-gray-400 leading-relaxed text-sm">{p.cons}</p>
+                  <p className="text-gray-400 leading-relaxed text-sm whitespace-pre-line">{p.cons}</p>
                 </div>
               )}
             </section>
           </FadeIn>
         )}
       </div>
-    </main>
+    </div>
   );
 }

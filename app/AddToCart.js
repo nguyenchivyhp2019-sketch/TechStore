@@ -1,106 +1,149 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { ShoppingCart, Zap, Minus, Plus } from "lucide-react";
 import { useCart } from "./CartContext";
+import { formatPrice } from "@/lib/format";
+import { CUT_BUTTON } from "@/lib/ui";
+
+const COLOR_CODES = [
+  [["đen", "black", "titan"], "#111"],
+  [["trắng", "white", "bạc", "silver"], "#f3f4f6"],
+  [["xanh", "blue", "green"], "#3b82f6"],
+  [["hồng", "pink"], "#ec4899"],
+  [["tím", "purple"], "#a855f7"],
+  [["vàng", "gold"], "#eab308"],
+  [["cam", "orange"], "#f97316"],
+  [["xám", "grey", "gray"], "#9ca3af"],
+  [["đỏ", "red"], "#ef4444"],
+];
+
+const colorCode = (name) => {
+  const n = name.toLowerCase();
+  return COLOR_CODES.find(([keys]) => keys.some((k) => n.includes(k)))?.[1] ?? "#d1d5db";
+};
 
 export default function AddToCart({ product }) {
+  const router = useRouter();
   const { addItem } = useCart();
   const [idx, setIdx] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || null);
-  const [isAdded, setIsAdded] = useState(false);
+  const [color, setColor] = useState(product.colors?.[0] || null);
+  const [qty, setQty] = useState(1);
 
-  const variants = product.variants;
+  const variants = product.variants?.length ? product.variants : null;
   const variant = variants ? variants[idx] : null;
   const price = variant ? variant.price : product.price;
+  const outOfStock = product.stock != null && product.stock <= 0;
 
-  if (price === null || price === 0) {
-    return <p className="text-red-500 font-bold uppercase tracking-wider">Vui lòng liên hệ cửa hàng.</p>;
+  if (!price) {
+    return (
+      <p className="text-gray-300">
+        Sản phẩm đang cập nhật giá. Vui lòng liên hệ hotline để được báo giá.
+      </p>
+    );
   }
 
-  const handleAddToCart = () => {
-    addItem(product, variant, selectedColor);
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
+  const add = () => {
+    addItem(product, variant, color, qty);
+    toast.success(`Đã thêm ${qty} × ${product.name} vào giỏ`);
   };
 
-  const getColorCode = (colorName) => {
-    const name = colorName.toLowerCase();
-    if (name.includes('đen') || name.includes('black') || name.includes('titan')) return '#111';
-    if (name.includes('trắng') || name.includes('white')) return '#f3f4f6';
-    if (name.includes('xanh') || name.includes('blue')) return '#3b82f6';
-    if (name.includes('hồng') || name.includes('pink')) return '#ec4899';
-    if (name.includes('tím') || name.includes('purple')) return '#a855f7';
-    if (name.includes('vàng') || name.includes('gold')) return '#eab308';
-    if (name.includes('cam') || name.includes('orange')) return '#f97316';
-    if (name.includes('xám') || name.includes('grey') || name.includes('gray')) return '#9ca3af';
-    if (name.includes('đỏ') || name.includes('red')) return '#ef4444';
-    return '#D1D5DB';
+  const buyNow = () => {
+    addItem(product, variant, color, qty);
+    router.push("/cart");
   };
 
   return (
-    <div className="space-y-8">
-      {/* CHỌN MÀU SẮC */}
-      {product.colors && product.colors.length > 0 && (
+    <div className="space-y-6">
+      {variants && (
+        <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
+          {formatPrice(price)}
+        </p>
+      )}
+
+      {product.colors?.length > 0 && (
         <div>
           <p className="font-bold text-gray-300 mb-3 uppercase tracking-widest text-sm">
-            Màu sắc: <span className="text-red-500">{selectedColor}</span>
+            Màu sắc: <span className="text-red-500">{color}</span>
           </p>
-          <div className="flex flex-wrap gap-4">
-            {product.colors.map((color) => (
+          <div className="flex flex-wrap gap-3">
+            {product.colors.map((c) => (
               <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className={`relative w-10 h-10 rounded-sm flex items-center justify-center transition-all duration-300 border-2 ${
-                  selectedColor === color ? "border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.6)] scale-110" : "border-gray-700 hover:border-gray-500"
+                key={c}
+                type="button"
+                title={c}
+                aria-label={`Màu ${c}`}
+                aria-pressed={color === c}
+                onClick={() => setColor(c)}
+                className={`w-10 h-10 rounded-sm flex items-center justify-center transition-all border-2 ${
+                  color === c ? "border-red-600 shadow-[0_0_12px_rgba(220,38,38,0.6)]" : "border-gray-700 hover:border-gray-500"
                 }`}
               >
-                <span 
-                  className="w-6 h-6 rounded-sm border border-gray-900"
-                  style={{ backgroundColor: getColorCode(color) }}
-                ></span>
+                <span className="w-6 h-6 rounded-sm border border-gray-900" style={{ backgroundColor: colorCode(c) }} />
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* CHỌN PHIÊN BẢN */}
-      {variants && variants.length > 0 && (
+      {variants && (
         <div>
-          <p className="font-bold text-gray-300 mb-3 uppercase tracking-widest text-sm">Phiên bản:</p>
-          <div className="relative">
-            <select
-              value={idx}
-              onChange={(e) => setIdx(Number(e.target.value))}
-              className="appearance-none bg-[#050505] border border-gray-700 text-gray-200 font-bold rounded-sm px-4 py-4 w-full focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all cursor-pointer uppercase text-sm"
-            >
-              {variants.map((v, i) => (
-                <option key={v.label} value={i}>
-                  {v.label} — {v.price.toLocaleString("vi-VN")} đ
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-red-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
+          <p className="font-bold text-gray-300 mb-3 uppercase tracking-widest text-sm">Phiên bản</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {variants.map((v, i) => (
+              <button
+                key={v.label}
+                type="button"
+                aria-pressed={idx === i}
+                onClick={() => setIdx(i)}
+                className={`text-left px-4 py-3 border transition-colors ${
+                  idx === i ? "border-red-600 bg-red-950/30 text-white" : "border-[#333] bg-black/40 text-gray-400 hover:border-gray-500"
+                }`}
+              >
+                <span className="block text-sm font-bold">{v.label}</span>
+                <span className="block text-xs text-red-400 mt-0.5">{formatPrice(v.price)}</span>
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* NÚT THÊM VÀO GIỎ */}
-      <div>
-        <button
-          onClick={handleAddToCart}
-          disabled={isAdded}
-          className={`font-black uppercase tracking-widest text-lg px-8 py-4 rounded-sm w-full transition-all duration-300 flex items-center justify-center ${
-            isAdded 
-              ? "bg-green-700 text-white shadow-[0_0_20px_rgba(21,128,61,0.6)]" 
-              : "bg-red-800 hover:bg-red-700 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_30px_rgba(220,38,38,0.8)] active:scale-[0.98]"
-          }`}
-          style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}
-        >
-          {isAdded ? "Đã nạp đạn vào giỏ!" : "Thêm vào giỏ hàng"}
-        </button>
+      <div className="flex items-center gap-4">
+        <span className="font-bold text-gray-300 uppercase tracking-widest text-sm">Số lượng</span>
+        <div className="flex items-center border border-[#333]">
+          <button type="button" aria-label="Giảm" onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-950/30">
+            <Minus size={16} />
+          </button>
+          <span className="w-10 text-center font-bold text-white">{qty}</span>
+          <button type="button" aria-label="Tăng" onClick={() => setQty((q) => Math.min(100, q + 1))} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-950/30">
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
+
+      {outOfStock ? (
+        <p className="py-4 text-center border border-[#333] text-gray-400 font-bold uppercase tracking-widest">Tạm hết hàng</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={buyNow}
+            className="flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-black uppercase tracking-widest py-4 transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_30px_rgba(220,38,38,0.8)] active:scale-[0.98]"
+            style={{ clipPath: CUT_BUTTON }}
+          >
+            <Zap size={18} /> Mua ngay
+          </button>
+          <button
+            type="button"
+            onClick={add}
+            className="flex items-center justify-center gap-2 border border-red-700 bg-red-950/30 hover:bg-red-900/50 text-red-400 hover:text-white font-black uppercase tracking-widest py-4 transition-colors active:scale-[0.98]"
+            style={{ clipPath: CUT_BUTTON }}
+          >
+            <ShoppingCart size={18} /> Thêm vào giỏ
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function Sidebar({ categories }) {
               <LayoutGrid size={22} strokeWidth={2} />
             </div>
             <span className={`ml-2 font-bold uppercase italic tracking-wider text-sm text-gray-300 whitespace-nowrap transition-opacity duration-300 ${isExpanded ? "opacity-100" : "opacity-0"}`}>
-              Tất cả vũ khí
+              Tất cả sản phẩm
             </span>
           </Link>
 

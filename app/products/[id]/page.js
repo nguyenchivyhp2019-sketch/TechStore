@@ -37,6 +37,7 @@ export default async function ProductPage({ params }) {
 
   const category = categories.find((c) => c.slug === p.category);
   const hasVariants = p.variants?.length > 0;
+  const specs = Array.isArray(p.specs) ? p.specs : [];
   const inStock = p.stock == null || p.stock > 0;
 
   return (
@@ -134,14 +135,14 @@ export default async function ProductPage({ params }) {
           </FadeIn>
         )}
 
-        {p.specs?.length > 0 && (
+        {specs.length > 0 && (
           <FadeIn>
             <section>
               <h2 className="text-2xl md:text-3xl font-black mb-6 text-white uppercase italic tracking-wide border-l-4 border-red-600 pl-4">
                 Thông số <span className="text-red-600">kỹ thuật</span>
               </h2>
               <dl className="max-w-4xl border border-gray-800 divide-y divide-gray-800">
-                {p.specs.map((spec, i) => (
+                {specs.map((spec, i) => (
                   <div key={i} className="grid grid-cols-1 sm:grid-cols-[220px_1fr] odd:bg-[#0d0d0d]">
                     <dt className="px-4 pt-3 sm:py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">{spec.label}</dt>
                     <dd className="px-4 pb-3 sm:py-3 text-sm text-gray-200">{spec.value}</dd>

@@ -43,12 +43,13 @@ export default async function ProductsPage({ searchParams }) {
       <div className="p-5 flex flex-col flex-grow z-20 relative">
         <p className="font-sans text-xs text-red-500 font-bold uppercase tracking-widest mb-1">{p.brand ?? "DOOM"}</p>
         
-        {/* Tên sản phẩm: Đổi sang font-sans, bỏ uppercase, thêm font-bold */}
+        {/* Tên sản phẩm: Dùng font-sans, viết thường, in đậm */}
         <h3 className="font-sans text-lg font-bold text-gray-200 mb-2 line-clamp-2 leading-tight group-hover:text-red-400 transition-colors duration-300">
           {p.name}
         </h3>
         
         <div className="mt-auto pt-3 border-t border-gray-800">
+          {/* Giá tiền: Dùng font-doom */}
           <p className="font-doom text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 text-2xl tracking-wider">{formatPrice(p.price)}</p>
           <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-medium mt-2 font-sans">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Sẵn sàng chiến đấu
@@ -61,7 +62,7 @@ export default async function ProductsPage({ searchParams }) {
   return (
     <main className="max-w-7xl mx-auto px-4 py-8 min-h-screen bg-[#050505]">
       
-      {/* 1. THANH DANH MỤC */}
+      {/* 1. THANH DANH MỤC (Dùng font-doom) */}
       <div className="flex flex-wrap gap-3 mb-8 justify-center mt-4">
         <Link 
           href="/products" 
@@ -87,7 +88,7 @@ export default async function ProductsPage({ searchParams }) {
       {/* 2. THANH THƯƠNG HIỆU */}
       <BrandFilter brands={brands} category={category} currentBrand={params.brand} />
 
-      {/* 3. THANH BỘ LỌC */}
+      {/* 3. THANH BỘ LỌC (Dùng font-sans cho input, font-doom cho nút) */}
       <div className="bg-[#111] border border-[#333] rounded-sm p-4 mb-10 shadow-sm max-w-5xl mx-auto font-sans">
         <form className="flex flex-col md:flex-row items-center gap-4 text-sm">
           {category && <input type="hidden" name="category" value={category} />}

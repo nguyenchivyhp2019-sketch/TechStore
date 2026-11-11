@@ -1,10 +1,24 @@
 @import "tailwindcss";
 
 /* =========================================
-   CÁC HIỆU ỨNG ANIMATION
+   1. CẤU HÌNH FONT CHỮ (DOOM 2016)
    ========================================= */
+@font-face {
+  font-family: 'Doom2016';
+  src: url('/fonts/doom-2016.ttf') format('truetype'); 
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
-/* Hiệu ứng chuyển trang mượt mà giống Apple */
+@theme {
+  /* Tạo class font-doom cho các tiêu đề/nút bấm */
+  --font-doom: "Doom2016", sans-serif; 
+}
+
+/* =========================================
+   2. CÁC HIỆU ỨNG ANIMATION
+   ========================================= */
 @keyframes appleFadeInUp {
   0% { opacity: 0; transform: translateY(15px) scale(0.99); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -13,7 +27,6 @@
   animation: appleFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Hiệu ứng nhịp thở cho banner ảnh tĩnh */
 @keyframes breathe {
   0% { transform: scale(1); opacity: 0.3; }
   50% { transform: scale(1.05); opacity: 0.5; }
@@ -23,7 +36,6 @@
   animation: breathe 6s ease-in-out infinite;
 }
 
-/* Hiệu ứng chuyển động chậm cho ảnh nền (Ken Burns) */
 @keyframes kenburns {
   0% { transform: scale(1) translate(0, 0); }
   50% { transform: scale(1.1) translate(-2%, 2%); }
@@ -33,7 +45,6 @@
   animation: kenburns 20s ease-in-out infinite;
 }
 
-/* Hiệu ứng tàn lửa bay lên */
 @keyframes ember {
   0% { transform: translateY(0) scale(1); opacity: 0; }
   20% { opacity: 1; }
@@ -44,7 +55,7 @@
 }
 
 /* =========================================
-   TÙY CHỈNH THANH CUỘN
+   3. TÙY CHỈNH THANH CUỘN
    ========================================= */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

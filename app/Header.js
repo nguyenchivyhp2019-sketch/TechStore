@@ -28,7 +28,7 @@ const MENU_DATA = {
       {
         title: "Mua sắm theo Hãng",
         links: [
-          { name: "Apple", href: "/products?category=laptop&brand=Apple"},
+          { name: "Apple", href: "/products?category=laptop&brand=Apple", subItems: [{ name: "MacBook Air", href: qLink("MacBook Air") }, { name: "MacBook Pro", href: qLink("MacBook Pro") }] },
           { name: "ASUS", href: "/products?category=laptop&brand=ASUS" },
           { name: "Dell", href: "/products?category=laptop&brand=Dell" },
         ],
@@ -161,12 +161,14 @@ export default function Header({ products = [] }) {
           <button type="button" aria-label="Mở danh mục" onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-red-500 hover:text-white transition-colors">
             <Menu size={28} />
           </button>
+          {/* CHỈ LOGO NÀY GIỮ FONT DOOM */}
           <Link href="/" className="font-doom text-4xl md:text-5xl tracking-widest text-red-600 hover:text-white transition-all duration-300 uppercase drop-shadow-[0_0_15px_rgba(220,38,38,1)]">
             DOOM.
           </Link>
         </div>
 
-        <nav aria-label="Điều hướng chính" className="hidden lg:flex items-center gap-6 xl:gap-8 text-lg font-bold uppercase tracking-wider text-gray-400 h-full font-doom">
+        {/* Menu dùng font-sans thông thường */}
+        <nav aria-label="Điều hướng chính" className="hidden lg:flex items-center gap-6 xl:gap-8 text-base font-bold uppercase tracking-wider text-gray-400 h-full font-sans">
           <button type="button" onClick={() => setIsMenuOpen(true)} className={`${GLOW} transition-all py-5`}>
             Danh mục
           </button>
@@ -229,9 +231,8 @@ export default function Header({ products = [] }) {
                               )}
                             </div>
                             <div className="min-w-0">
-                              {/* Tên sản phẩm gợi ý: Đổi sang font-sans, viết thường */}
                               <p className="font-sans font-bold text-gray-200 text-base line-clamp-1">{p.name}</p>
-                              <p className="font-doom text-red-500 text-sm tracking-wider mt-0.5">{formatPrice(p.price)}</p>
+                              <p className="font-sans text-red-500 text-sm font-bold mt-0.5">{formatPrice(p.price)}</p>
                             </div>
                           </Link>
                         </li>
@@ -239,7 +240,7 @@ export default function Header({ products = [] }) {
                     })}
                   </ul>
                 ) : (
-                  <div className="p-4 text-center text-red-500 text-lg font-bold uppercase font-doom">Không tìm thấy vũ khí.</div>
+                  <div className="p-4 text-center text-red-500 text-lg font-bold uppercase font-sans">Không tìm thấy vũ khí.</div>
                 )}
               </div>
             )}
@@ -270,18 +271,18 @@ export default function Header({ products = [] }) {
               <div className="flex flex-col md:flex-row gap-10 md:gap-20">
                 {MENU_DATA[activeMenu].categories.map((col) => (
                   <div key={col.title} className="flex flex-col gap-4 min-w-[250px]">
-                    <h3 className="font-doom text-xl text-red-600 tracking-wider mb-2 border-b border-red-900 pb-2 inline-block">
+                    <h3 className="font-sans text-sm font-bold text-red-600 tracking-wider mb-2 border-b border-red-900 pb-2 inline-block uppercase">
                       {col.title}
                     </h3>
                     {col.links.map((link) => (
                       <div key={link.name} className="group/sub flex flex-col">
-                        <Link href={link.href} onClick={() => setActiveMenu(null)} className="font-doom text-2xl text-gray-300 hover:text-red-500 transition-colors py-1 inline-block uppercase tracking-wide">
+                        <Link href={link.href} onClick={() => setActiveMenu(null)} className="font-sans text-xl font-bold text-gray-300 hover:text-red-500 transition-colors py-1 inline-block">
                           {link.name}
                         </Link>
                         {link.subItems && (
                           <div className="hidden group-hover/sub:flex group-focus-within/sub:flex flex-col mt-2 pl-4 border-l-2 border-red-800 space-y-3">
                             {link.subItems.map((sub) => (
-                              <Link key={sub.name} href={sub.href} onClick={() => setActiveMenu(null)} className="font-sans text-base text-gray-500 hover:text-red-400 transition-colors font-medium">
+                              <Link key={sub.name} href={sub.href} onClick={() => setActiveMenu(null)} className="font-sans text-sm text-gray-500 hover:text-red-400 transition-colors font-medium">
                                 {sub.name}
                               </Link>
                             ))}
@@ -295,8 +296,8 @@ export default function Header({ products = [] }) {
 
               {MENU_DATA[activeMenu].viewAll && (
                 <div className="mt-10 pt-6 border-t border-red-950">
-                  <Link href={MENU_DATA[activeMenu].viewAll} onClick={() => setActiveMenu(null)} className="font-doom inline-flex items-center gap-2 text-xl uppercase tracking-wider text-red-500 hover:text-white transition-colors">
-                    Xem tất cả {activeMenu} <ArrowRight size={20} />
+                  <Link href={MENU_DATA[activeMenu].viewAll} onClick={() => setActiveMenu(null)} className="font-sans font-bold inline-flex items-center gap-2 text-base uppercase tracking-wider text-red-500 hover:text-white transition-colors">
+                    Xem tất cả {activeMenu} <ArrowRight size={18} />
                   </Link>
                 </div>
               )}

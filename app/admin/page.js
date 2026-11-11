@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { ShoppingBag, Clock, Banknote, Search, ArrowLeft } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { formatPrice } from "@/lib/format";
@@ -10,15 +11,26 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Quản lý đơn hàng", robots: { index: false, follow: false } };
 
 const VALID_STATUS = Object.keys(ORDER_STATUS);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function updateStatus(formData) {
   "use server";
-  const id = Number(formData.get("id"));
+  const id = String(formData.get("id"));
   const status = String(formData.get("status"));
-  if (!Number.isInteger(id) || !VALID_STATUS.includes(status)) return;
-  const { error } = await supabaseAdmin.from("orders").update({ status }).eq("id", id);
-  if (error) console.error("Admin: không cập nhật được trạng thái", id, error.message);
+  const back = new URLSearchParams(String(formData.get("back") ?? ""));
+  back.delete("saved");
+  back.delete("error");
+
+  let failed = !UUID_RE.test(id) || !VALID_STATUS.includes(status);
+  if (!failed) {
+    const { data, error } = await supabaseAdmin.from("orders").update({ status }).eq("id", id).select("id");
+    if (error) console.error("Admin: không cập nhật được trạng thái", id, error.message);
+    failed = Boolean(error) || !data?.length;
+  }
+
   revalidatePath("/admin");
+  back.set(failed ? "error" : "saved", String(formData.get("code") ?? ""));
+  redirect(`/admin?${back}`);
 }
 
 function StatCard({ icon: Icon, label, value, accent = "text-red-500" }) {
@@ -36,7 +48,7 @@ function StatCard({ icon: Icon, label, value, accent = "text-red-500" }) {
 }
 
 export default async function AdminPage({ searchParams }) {
-  const { status: statusFilter = "", q = "" } = await searchParams;
+  const { status: statusFilter = "", q = "", saved = "", error: saveError = "" } = await searchParams;
 
   const { data: allOrders, error } = await supabaseAdmin
     .from("orders")
@@ -78,6 +90,17 @@ export default async function AdminPage({ searchParams }) {
           <ArrowLeft size={16} /> Về trang chủ
         </Link>
       </div>
+
+      {(saved || saveError) && (
+        <div
+          role="status"
+          className={`mb-6 px-4 py-3 border text-sm font-bold ${
+            saveError ? "border-red-700 bg-red-950/40 text-red-300" : "border-green-700 bg-green-950/30 text-green-300"
+          }`}
+        >
+          {saveError ? `Không lưu được trạng thái đơn ${saveError}. Vui lòng thử lại.` : `Đã cập nhật trạng thái đơn ${saved}.`}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StatCard icon={ShoppingBag} label="Tổng đơn hàng" value={orders.length} />
@@ -147,8 +170,11 @@ export default async function AdminPage({ searchParams }) {
                   <td className="p-4">
                     <form action={updateStatus} className="flex items-center gap-2">
                       <input type="hidden" name="id" value={order.id} />
+                      <input type="hidden" name="code" value={order.code} />
+                      <input type="hidden" name="back" value={new URLSearchParams({ ...(statusFilter && { status: statusFilter }), ...(q && { q }) }).toString()} />
                       <select
                         name="status"
+                        key={order.status}
                         defaultValue={order.status}
                         aria-label={`Trạng thái đơn ${order.code}`}
                         className={`px-2.5 py-1.5 text-xs font-bold border bg-[#0a0a0a] cursor-pointer outline-none focus:border-red-600 ${st.badge}`}

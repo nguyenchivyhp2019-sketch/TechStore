@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 
 const INJECT = "https://cdn.botpress.cloud/webchat/v3.7/inject.js";
-const CONFIG = "https://files.bpcontent.cloud/2026/10/22/09/20261022095005-MVU5GTED.js";
+const CONFIG = "https://files.bpcontent.cloud/2026/10/09/05/20261009055805-HW36F2AT.js";
 
 export default function BotpressChat() {
   useEffect(() => {

@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "../CartContext";
 import { supabase } from "@/lib/supabase";
-import { Lock } from "lucide-react";
+import { Lock, ShieldAlert, Crosshair, ArrowLeft } from "lucide-react";
 
 const money = (n) => n.toLocaleString("vi-VN") + " đ";
+const CUT_CARD = "polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%)";
+const CUT_BUTTON = "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)";
 
 export default function CheckoutPage() {
   const { items, total, clear } = useCart();
@@ -33,36 +35,31 @@ export default function CheckoutPage() {
     setError("");
 
     try {
-  // Lấy phiên đăng nhập để máy chủ xác minh khách hàng
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+      // Lấy phiên đăng nhập mới nhất để máy chủ xác minh khách hàng
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-  if (sessionError || !session?.access_token) {
-    throw new Error(
-      "Phiên đăng nhập đã hết hạn. Bạn vui lòng đăng nhập lại."
-    );
-  }
+      // Nếu không có session hoặc token hết hạn -> Yêu cầu đăng nhập lại
+      if (sessionError || !session?.access_token) {
+        throw new Error(
+          "Phiên đăng nhập của bạn đã hết hạn hoặc không hợp lệ. Vui lòng tải lại trang và đăng nhập lại."
+        );
+      }
 
-  const res = await fetch("/api/orders", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({
-      name: f.get("name"),
-      phone: f.get("phone"),
-      address: f.get("address"),
-      items: items.map(({ id, label, color, qty }) => ({
-        id,
-        label,
-        color,
-        qty,
-      })),
-    }),
-  });
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          name: f.get("name"),
+          phone: f.get("phone"),
+          address: f.get("address"),
+          items: items.map(({ id, label, color, qty }) => ({
+            id, label, color, qty,
+          })),
+        }),
+      });
       
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Đặt hàng thất bại");
@@ -92,24 +89,33 @@ export default function CheckoutPage() {
 
   // Đang kiểm tra đăng nhập
   if (checkingAuth) {
-    return <div className="min-h-screen flex items-center justify-center bg-[#f5f5f7] dark:bg-[#0a0a0a] text-gray-500">Đang kiểm tra...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050505] text-red-500 font-doom text-2xl tracking-widest">
+        ĐANG KẾT NỐI HỆ THỐNG...
+      </div>
+    );
   }
 
   // CHƯA ĐĂNG NHẬP -> Bắt buộc đăng nhập
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0a] flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-[#1c1c1e] p-10 rounded-3xl shadow-xl w-full max-w-md border border-gray-100 dark:border-gray-800 text-center">
-          <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center mx-auto mb-6">
+      <main className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+        <div 
+          className="bg-[#111] p-10 shadow-[0_0_30px_rgba(220,38,38,0.2)] w-full max-w-md border border-[#333] text-center"
+          style={{ clipPath: CUT_CARD }}
+        >
+          <div className="w-20 h-20 bg-red-950/30 border border-red-700 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_15px_rgba(220,38,38,0.5)]">
             <Lock size={40} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Yêu cầu đăng nhập</h2>
-          <p className="text-gray-500 mb-8">Bạn cần đăng nhập hoặc tạo tài khoản để có thể tiến hành đặt hàng và theo dõi đơn hàng của mình.</p>
+          <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">Yêu cầu đăng nhập</h2>
+          <p className="text-gray-400 mb-8 font-sans">
+            Bạn cần đăng nhập hoặc tạo tài khoản để có thể tiến hành đặt hàng và theo dõi đơn hàng của mình.
+          </p>
           
-          <Link href="/login?redirect=/checkout" className="block w-full bg-[#0071e3] hover:bg-[#0077ED] text-white font-bold py-3 rounded-xl transition-colors mb-3">
+          <Link href="/login?redirect=/checkout" className="block w-full bg-red-800 hover:bg-red-700 text-white font-bold py-3 transition-colors mb-3 border border-red-600">
             Đăng nhập ngay
           </Link>
-          <Link href="/cart" className="block w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium py-3 rounded-xl transition-colors">
+          <Link href="/cart" className="block w-full bg-[#222] hover:bg-[#333] text-gray-300 font-medium py-3 transition-colors border border-[#444]">
             Quay lại giỏ hàng
           </Link>
         </div>
@@ -120,48 +126,51 @@ export default function CheckoutPage() {
   // MÀN HÌNH ĐẶT HÀNG THÀNH CÔNG
   if (order) {
     return (
-      <main className="min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0a] py-12 px-4 transition-colors duration-300">
-        <div className="max-w-2xl mx-auto bg-white dark:bg-[#1c1c1e] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 text-center">
-          <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
+      <main className="min-h-screen bg-[#050505] py-12 px-4">
+        <div 
+          className="max-w-2xl mx-auto bg-[#111] p-8 shadow-[0_0_30px_rgba(220,38,38,0.2)] border border-[#333] text-center"
+          style={{ clipPath: CUT_CARD }}
+        >
+          <div className="w-20 h-20 bg-green-950/30 border border-green-700 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_15px_rgba(34,197,94,0.5)]">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
           </div>
-          <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Đặt hàng thành công!</h1>
-          <p className="text-gray-500 mb-8">
-            Mã đơn hàng của bạn là: <span className="text-[#0071e3] font-bold">#{order.code}</span>
+          <h1 className="text-3xl font-black mb-2 text-white uppercase tracking-wide">Đặt hàng thành công!</h1>
+          <p className="text-gray-400 mb-8 font-sans">
+            Mã đơn hàng của bạn là: <span className="text-red-500 font-bold font-doom text-xl">#{order.code}</span>
           </p>
           
-          <div className="bg-[#f5f5f7] dark:bg-[#0a0a0a] rounded-2xl p-4 mb-6 text-left">
-            <p className="font-medium text-gray-800 dark:text-gray-200 mb-2">Thông tin giao hàng:</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Người nhận: {order.name} - {order.phone}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Địa chỉ: {order.address}</p>
+          <div className="bg-[#050505] border border-[#333] p-4 mb-6 text-left">
+            <p className="font-bold text-gray-200 mb-2 uppercase tracking-wide">Thông tin giao hàng:</p>
+            <p className="text-sm text-gray-400 font-sans">Người nhận: {order.name} - {order.phone}</p>
+            <p className="text-sm text-gray-400 font-sans">Địa chỉ: {order.address}</p>
           </div>
 
-          <ul className="border border-gray-200 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-800 mb-6 text-left bg-white dark:bg-[#1c1c1e]">
+          <ul className="border border-[#333] divide-y divide-[#333] mb-6 text-left bg-[#0a0a0a]">
             {order.items.map((i) => (
               <li key={i.key} className="p-4 flex justify-between items-center">
                 <div>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">{i.name}</span>
-                  <div className="text-sm text-gray-500 mt-1">
+                  <span className="font-bold text-gray-200">{i.name}</span>
+                  <div className="text-sm text-gray-500 mt-1 font-sans">
                     {i.label && <span>{i.label} </span>}
                     {i.color && <span>- Màu: {i.color} </span>}
                     <span>× {i.qty}</span>
                   </div>
                 </div>
-                <span className="font-bold text-gray-800 dark:text-gray-200">{money(i.price * i.qty)}</span>
+                <span className="font-bold text-red-500">{money(i.price * i.qty)}</span>
               </li>
             ))}
           </ul>
           
-          <div className="flex justify-between items-center mb-8 px-4">
-            <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Tổng thanh toán:</span>
-            <span className="text-2xl font-bold text-red-600 dark:text-red-400">{money(order.total)}</span>
+          <div className="flex justify-between items-center mb-8 px-4 border-t border-[#333] pt-4">
+            <span className="text-lg text-gray-400 font-medium">Tổng thanh toán:</span>
+            <span className="text-2xl font-black text-red-500 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">{money(order.total)}</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/profile" className="bg-[#0071e3] hover:bg-[#0077ED] text-white font-medium px-8 py-3 rounded-xl transition-colors shadow-md">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/profile" className="bg-red-800 hover:bg-red-700 text-white font-bold px-8 py-3 transition-colors border border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)]">
               Xem đơn hàng của tôi
             </Link>
-            <Link href="/products" className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium px-8 py-3 rounded-xl transition-colors">
+            <Link href="/products" className="bg-[#222] hover:bg-[#333] text-gray-300 font-bold px-8 py-3 transition-colors border border-[#444]">
               Tiếp tục mua sắm
             </Link>
           </div>
@@ -173,10 +182,11 @@ export default function CheckoutPage() {
   // GIỎ HÀNG TRỐNG
   if (items.length === 0) {
     return (
-      <main className="min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0a] flex flex-col items-center justify-center px-4">
-        <p className="text-gray-500 dark:text-gray-400 mb-4 text-lg">Giỏ hàng của bạn đang trống.</p>
-        <Link href="/products" className="bg-[#0071e3] hover:bg-[#0077ED] text-white px-8 py-3 rounded-xl font-medium transition-colors">
-          Tiếp tục mua sắm
+      <main className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-4">
+        <ShieldAlert size={64} className="text-red-500 mb-6 opacity-50" />
+        <p className="text-gray-400 mb-6 text-xl font-bold uppercase tracking-wider">Kho vũ khí của bạn đang trống.</p>
+        <Link href="/products" className="bg-red-800 hover:bg-red-700 text-white px-8 py-3 font-bold transition-colors border border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)]">
+          Trang bị ngay
         </Link>
       </main>
     );
@@ -184,60 +194,75 @@ export default function CheckoutPage() {
 
   // FORM ĐIỀN THÔNG TIN ĐẶT HÀNG
   return (
-    <main className="min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0a] py-12 px-4 transition-colors duration-300">
+    <main className="min-h-screen bg-[#050505] py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        <Link href="/cart" className="text-sm text-gray-500 hover:text-[#0071e3] mb-6 inline-block font-medium">
-          &larr; Quay lại giỏ hàng
+        <Link href="/cart" className="text-sm text-gray-500 hover:text-red-500 mb-6 inline-flex items-center gap-2 font-bold uppercase tracking-wider transition-colors">
+          <ArrowLeft size={16} /> Quay lại giỏ hàng
         </Link>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white dark:bg-[#1c1c1e] p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-            <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-800 pb-3">Thông tin đặt hàng</h1>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          {/* CỘT TRÁI: FORM ĐIỀN THÔNG TIN */}
+          <div 
+            className="bg-[#111] p-6 shadow-[0_0_20px_rgba(0,0,0,0.5)] border border-[#333]"
+            style={{ clipPath: CUT_CARD }}
+          >
+            <h1 className="text-2xl font-black mb-6 text-white border-b border-[#333] pb-3 uppercase tracking-wide flex items-center gap-2">
+              <Crosshair className="text-red-600" /> Thông tin đặt hàng
+            </h1>
+            <form onSubmit={handleSubmit} className="space-y-4 font-sans">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ và tên</label>
-                <input name="name" required placeholder="VD: Nguyễn Văn A" className="w-full border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 bg-transparent text-gray-900 dark:text-white focus:outline-none focus:border-[#0071e3] transition-colors" />
+                <label className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Họ và tên</label>
+                <input name="name" required placeholder="VD: Nguyễn Văn A" className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
-                <input name="phone" required placeholder="VD: 0987654321" className="w-full border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 bg-transparent text-gray-900 dark:text-white focus:outline-none focus:border-[#0071e3] transition-colors" />
+                <label className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Số điện thoại</label>
+                <input name="phone" required placeholder="VD: 0987654321" className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ nhận hàng</label>
-                <input name="address" required placeholder="Số nhà, tên đường, quận/huyện..." className="w-full border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 bg-transparent text-gray-900 dark:text-white focus:outline-none focus:border-[#0071e3] transition-colors" />
+                <label className="block text-sm font-bold text-gray-400 mb-1 uppercase tracking-wide">Địa chỉ nhận hàng</label>
+                <input name="address" required placeholder="Số nhà, tên đường, quận/huyện..." className="w-full border border-[#333] px-4 py-3 bg-[#050505] text-white focus:outline-none focus:border-red-600 transition-colors" />
               </div>
               
-              {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+              {error && <p className="text-red-500 text-sm font-bold bg-red-950/30 p-3 border border-red-900">{error}</p>}
 
-              <button type="submit" disabled={loading} className="w-full bg-[#0071e3] hover:bg-[#0077ED] text-white font-bold text-lg px-6 py-3.5 rounded-xl shadow-md transition-all hover:-translate-y-0.5 mt-4 disabled:opacity-50 disabled:hover:translate-y-0">
-                {loading ? "Đang xử lý..." : "Xác nhận đặt hàng"}
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-red-800 hover:bg-red-700 text-white font-black text-lg px-6 py-4 transition-all mt-4 disabled:opacity-50 border border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+                style={{ clipPath: CUT_BUTTON }}
+              >
+                {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT HÀNG"}
               </button>
             </form>
           </div>
 
+          {/* CỘT PHẢI: TÓM TẮT ĐƠN HÀNG */}
           <div>
-            <div className="bg-white dark:bg-[#1c1c1e] p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 sticky top-24">
-              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-800 pb-3">Đơn hàng của bạn</h2>
-              <ul className="space-y-4 mb-4 max-h-[300px] overflow-y-auto pr-2">
+            <div 
+              className="bg-[#111] p-6 shadow-[0_0_20px_rgba(0,0,0,0.5)] border border-[#333] sticky top-24"
+              style={{ clipPath: CUT_CARD }}
+            >
+              <h2 className="text-xl font-black mb-4 text-white border-b border-[#333] pb-3 uppercase tracking-wide">Đơn hàng của bạn</h2>
+              <ul className="space-y-4 mb-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                 {items.map((i) => (
-                  <li key={i.key} className="flex justify-between items-start gap-4">
+                  <li key={i.key} className="flex justify-between items-start gap-4 font-sans">
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm line-clamp-1">{i.name}</p>
+                      <p className="font-bold text-gray-200 text-sm line-clamp-1">{i.name}</p>
                       <p className="text-xs text-gray-500 mt-1">
                         {i.label && <span className="mr-2">{i.label}</span>}
                         {i.color && <span className="mr-2">- Màu: {i.color}</span>}
-                        <span>SL: {i.qty}</span>
+                        <span className="text-red-400">SL: {i.qty}</span>
                       </p>
                     </div>
-                    <div className="font-bold text-gray-800 dark:text-gray-200 text-sm whitespace-nowrap">
+                    <div className="font-bold text-gray-200 text-sm whitespace-nowrap">
                       {money(i.price * i.qty)}
                     </div>
                   </li>
                 ))}
               </ul>
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400 font-medium">Tổng tiền:</span>
-                <span className="text-2xl font-bold text-red-600 dark:text-red-400">{money(total)}</span>
+              <div className="border-t border-[#333] pt-4 flex justify-between items-center">
+                <span className="text-gray-400 font-bold uppercase tracking-wider">Tổng tiền:</span>
+                <span className="text-2xl font-black text-red-500 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">{money(total)}</span>
               </div>
             </div>
           </div>

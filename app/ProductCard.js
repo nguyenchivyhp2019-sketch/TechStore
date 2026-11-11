@@ -12,6 +12,7 @@ export default function ProductCard({ p }) {
       className="group relative bg-[#111] overflow-hidden flex flex-col h-full border border-[#2a2a2a] hover:border-red-600 hover:shadow-[0_0_20px_rgba(220,38,38,0.25)] transition-all duration-300"
       style={{ clipPath: CUT_CARD }}
     >
+      <span aria-hidden="true" className="absolute bottom-0 left-0 z-20 h-[3px] w-0 bg-red-600 group-hover:w-full transition-all duration-500" />
       {p.badge && (
         <span className="absolute top-0 left-0 z-20 bg-red-700 text-white text-[11px] font-black uppercase tracking-wider px-2.5 py-1">
           {p.badge}

@@ -21,6 +21,17 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Nền: ánh đỏ nhẹ phía trên + lưới mờ kiểu HUD */
+body {
+  background-color: #050505;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(153, 27, 27, 0.22), transparent 70%),
+    linear-gradient(rgba(220, 38, 38, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220, 38, 38, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+}
+
 /* =========================================
    2. CÁC HIỆU ỨNG ANIMATION
    ========================================= */

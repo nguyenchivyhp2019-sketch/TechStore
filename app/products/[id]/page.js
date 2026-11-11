@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getProduct, getCategories, formatPrice } from "@/lib/products";
+import { getProduct, getProducts, getCategories, formatPrice } from "@/lib/products";
 import AddToCart from "../../AddToCart";
 import ProductImage from "../../ProductImage";
 import FadeIn from "../../FadeIn";
+import ProductCard from "../../ProductCard";
 import { CheckCircle2, XCircle, Truck, ShieldCheck, RefreshCw, ChevronRight } from "lucide-react";
 import { CUT_CARD } from "@/lib/ui";
 
@@ -25,8 +26,14 @@ export async function generateMetadata({ params }) {
 
 export default async function ProductPage({ params }) {
   const { id } = await params;
-  const [p, categories] = await Promise.all([getProduct(id), getCategories()]);
+  const [p, categories, all] = await Promise.all([getProduct(id), getCategories(), getProducts()]);
   if (!p) notFound();
+
+  // Sản phẩm tương tự: cùng danh mục, ưu tiên cùng hãng
+  const related = all
+    .filter((x) => x.id !== p.id && x.category === p.category && x.price)
+    .sort((a, b) => (b.brand === p.brand) - (a.brand === p.brand))
+    .slice(0, 5);
 
   const category = categories.find((c) => c.slug === p.category);
   const hasVariants = p.variants?.length > 0;
@@ -168,6 +175,19 @@ export default async function ProductPage({ params }) {
           </FadeIn>
         )}
       </div>
+
+      {related.length > 0 && (
+        <FadeIn>
+          <section className="border-t border-gray-800 pt-12 mb-10">
+            <h2 className="text-2xl md:text-3xl font-black mb-6 text-white uppercase italic tracking-wide border-l-4 border-red-600 pl-4">
+              Sản phẩm <span className="text-red-600">tương tự</span>
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
+              {related.map((r) => <ProductCard key={r.id} p={r} />)}
+            </div>
+          </section>
+        </FadeIn>
+      )}
     </div>
   );
 }

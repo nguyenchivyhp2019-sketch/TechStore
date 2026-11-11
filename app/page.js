@@ -51,7 +51,11 @@ export default async function HomePage() {
   const products = await loadProducts();
   const priced = products.filter((p) => p.price);
   const flagged = priced.filter((p) => p.badge);
-  const featuredProducts = (flagged.length >= 4 ? flagged : priced).slice(0, 4);
+  // Chưa gắn nhãn nổi bật: lấy sản phẩm đắt nhất (flagship) của 4 danh mục chính
+  const flagship = ["dien-thoai", "laptop", "tai-nghe", "linh-kien-pc"]
+    .map((slug) => priced.filter((p) => p.category === slug).sort((a, b) => b.price - a.price)[0])
+    .filter(Boolean);
+  const featuredProducts = (flagged.length >= 4 ? flagged : flagship.length === 4 ? flagship : priced).slice(0, 4);
 
   // Mỗi danh mục lấy 2 sản phẩm để trang chủ đa dạng
   const featuredIds = new Set(featuredProducts.map((p) => p.id));

@@ -1,132 +1,173 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
 import Link from "next/link";
-import { ShoppingBag, ArrowLeft, PackageCheck, Clock, Truck, XCircle, CheckCircle2 } from "lucide-react";
 import { revalidatePath } from "next/cache";
+import { ShoppingBag, Clock, Banknote, Search, ArrowLeft } from "lucide-react";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { formatPrice } from "@/lib/format";
+import { ORDER_STATUS, statusOf } from "@/lib/order-status";
+import { card, pageTitle, input } from "@/lib/ui";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Quản lý đơn hàng", robots: { index: false, follow: false } };
 
-// Các trạng thái đơn hàng
-const STATUS_MAP = {
-  pending: { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400", icon: Clock },
-  processing: { label: "Đang đóng gói", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: PackageCheck },
-  shipping: { label: "Đang giao", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400", icon: Truck },
-  delivered: { label: "Đã giao", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", icon: CheckCircle2 },
-  cancelled: { label: "Đã hủy", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", icon: XCircle },
-};
+const VALID_STATUS = Object.keys(ORDER_STATUS);
 
-export default async function AdminPage() {
-  // Lấy danh sách đơn hàng
-  const { data: orders, error } = await supabaseAdmin
+async function updateStatus(formData) {
+  "use server";
+  const id = Number(formData.get("id"));
+  const status = String(formData.get("status"));
+  if (!Number.isInteger(id) || !VALID_STATUS.includes(status)) return;
+  const { error } = await supabaseAdmin.from("orders").update({ status }).eq("id", id);
+  if (error) console.error("Admin: không cập nhật được trạng thái", id, error.message);
+  revalidatePath("/admin");
+}
+
+function StatCard({ icon: Icon, label, value, accent = "text-red-500" }) {
+  return (
+    <div className={`${card} p-5 flex items-center gap-4`}>
+      <div className={`w-12 h-12 flex items-center justify-center border border-red-900 bg-red-950/30 ${accent}`}>
+        <Icon size={24} />
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-widest text-gray-500">{label}</p>
+        <p className="text-2xl font-black text-white">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+export default async function AdminPage({ searchParams }) {
+  const { status: statusFilter = "", q = "" } = await searchParams;
+
+  const { data: allOrders, error } = await supabaseAdmin
     .from("orders")
-    .select(`*, order_items (*)`)
+    .select("*, order_items(*)")
     .order("created_at", { ascending: false });
 
-  if (error) return <div className="p-10 text-center text-red-500">Có lỗi xảy ra khi tải dữ liệu.</div>;
-
-  const totalRevenue = orders?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
-
-  // Server Action: Cập nhật trạng thái
-  async function updateStatus(formData) {
-    "use server";
-    const id = formData.get("id");
-    const status = formData.get("status");
-    await supabaseAdmin.from("orders").update({ status }).eq("id", id);
-    revalidatePath("/admin"); // Làm mới lại bảng
+  if (error) {
+    return <div className="p-10 text-center text-red-500 font-bold">Không tải được danh sách đơn hàng.</div>;
   }
 
+  const orders = allOrders ?? [];
+  const revenue = orders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + Number(o.total), 0);
+  const pendingCount = orders.filter((o) => o.status === "pending").length;
+
+  const needle = q.trim().toLowerCase();
+  const shown = orders.filter(
+    (o) =>
+      (!statusFilter || o.status === statusFilter) &&
+      (!needle ||
+        o.code.toLowerCase().includes(needle) ||
+        o.phone.includes(needle) ||
+        o.customer_name.toLowerCase().includes(needle))
+  );
+
+  const filterHref = (s) => `/admin?${new URLSearchParams({ ...(s && { status: s }), ...(q && { q }) })}`;
+  const chip = (active) =>
+    `px-3 py-1.5 text-xs font-bold uppercase tracking-wider border transition-colors ${
+      active ? "bg-red-700 border-red-600 text-white" : "bg-[#111] border-[#333] text-gray-400 hover:border-red-700 hover:text-red-400"
+    }`;
+
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8 min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0a] transition-colors duration-300">
-      
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">Quản Lý Đơn Hàng</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Theo dõi và xử lý đơn đặt hàng</p>
+          <h1 className={pageTitle}>Quản lý <span className="text-red-600">đơn hàng</span></h1>
+          <p className="text-gray-500 text-sm mt-1">Theo dõi và cập nhật trạng thái đơn đặt hàng</p>
         </div>
-        <Link href="/" className="flex items-center gap-2 bg-white dark:bg-[#1c1c1e] text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-          <ArrowLeft size={18} /> Về trang chủ
+        <Link href="/" className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-400 hover:text-red-500 transition-colors">
+          <ArrowLeft size={16} /> Về trang chủ
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white dark:bg-[#1c1c1e] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center"><ShoppingBag size={28} /></div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Tổng đơn hàng</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{orders?.length || 0}</p>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-[#1c1c1e] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-2xl flex items-center justify-center"><PackageCheck size={28} /></div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Tổng doanh thu (đã trừ hủy)</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{totalRevenue.toLocaleString('vi-VN')} đ</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <StatCard icon={ShoppingBag} label="Tổng đơn hàng" value={orders.length} />
+        <StatCard icon={Clock} label="Chờ xử lý" value={pendingCount} accent="text-yellow-400" />
+        <StatCard icon={Banknote} label="Doanh thu (trừ đơn hủy)" value={formatPrice(revenue)} accent="text-green-400" />
       </div>
 
-      <div className="bg-white dark:bg-[#1c1c1e] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                <th className="p-4 whitespace-nowrap">Mã Đơn / Ngày</th>
-                <th className="p-4 whitespace-nowrap">Khách Hàng</th>
-                <th className="p-4">Sản Phẩm</th>
-                <th className="p-4 whitespace-nowrap">Tổng Tiền</th>
-                <th className="p-4 whitespace-nowrap">Trạng Thái</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {orders?.map((order) => {
-                const currentStatus = STATUS_MAP[order.status] || STATUS_MAP.pending;
-                const StatusIcon = currentStatus.icon;
+      <div className={`${card} p-4 mb-6 flex flex-col lg:flex-row lg:items-center gap-4`}>
+        <div className="flex flex-wrap gap-2">
+          <Link href={filterHref("")} className={chip(!statusFilter)}>Tất cả ({orders.length})</Link>
+          {VALID_STATUS.map((s) => (
+            <Link key={s} href={filterHref(s)} className={chip(statusFilter === s)}>
+              {ORDER_STATUS[s].label} ({orders.filter((o) => o.status === s).length})
+            </Link>
+          ))}
+        </div>
+        <form className="flex gap-2 lg:ml-auto lg:w-80">
+          {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+          <input name="q" defaultValue={q} placeholder="Mã đơn, SĐT, tên khách..." aria-label="Tìm đơn hàng" className={`${input} py-2`} />
+          <button type="submit" aria-label="Tìm" className="px-3 border border-red-700 bg-red-950/40 text-red-400 hover:bg-red-700 hover:text-white transition-colors">
+            <Search size={18} />
+          </button>
+        </form>
+      </div>
 
-                return (
-                  <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="p-4 whitespace-nowrap">
-                      <p className="font-bold text-[#0071e3] dark:text-blue-400">{order.code}</p>
-                      <p className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString('vi-VN')}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-medium text-gray-900 dark:text-white">{order.customer_name}</p>
-                      <p className="text-sm text-gray-500">{order.phone}</p>
-                      <p className="text-xs text-gray-400 truncate max-w-[150px]" title={order.address}>{order.address}</p>
-                    </td>
-                    <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
-                      <ul className="list-disc pl-4 space-y-1">
-                        {order.order_items?.map((item) => (
-                          <li key={item.id}>{item.product_name} {item.variant_label ? `(${item.variant_label})` : ''} x{item.qty}</li>
+      <div className={`${card} overflow-x-auto`}>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="bg-black/50 border-b border-[#2a2a2a] text-xs uppercase tracking-wider text-gray-500">
+              <th className="p-4 whitespace-nowrap">Mã đơn / Ngày</th>
+              <th className="p-4 whitespace-nowrap">Khách hàng</th>
+              <th className="p-4 min-w-[240px]">Sản phẩm</th>
+              <th className="p-4 whitespace-nowrap">Tổng tiền</th>
+              <th className="p-4 whitespace-nowrap">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#2a2a2a]">
+            {shown.length === 0 && (
+              <tr><td colSpan={5} className="p-10 text-center text-gray-500">Không có đơn hàng nào phù hợp.</td></tr>
+            )}
+            {shown.map((order) => {
+              const st = statusOf(order.status);
+              return (
+                <tr key={order.id} className="hover:bg-red-950/10 transition-colors align-top">
+                  <td className="p-4 whitespace-nowrap">
+                    <p className="font-doom text-lg text-red-500 tracking-wider">{order.code}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(order.created_at).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}
+                    </p>
+                  </td>
+                  <td className="p-4">
+                    <p className="font-bold text-gray-100">{order.customer_name}</p>
+                    <p className="text-gray-400">{order.phone}</p>
+                    <p className="text-xs text-gray-500 max-w-[220px]">{order.address}</p>
+                  </td>
+                  <td className="p-4 text-gray-300">
+                    <ul className="space-y-1">
+                      {order.order_items?.map((item) => (
+                        <li key={item.id} className="flex justify-between gap-3">
+                          <span>{item.product_name}{item.variant_label && ` (${item.variant_label})`}</span>
+                          <span className="text-gray-500 whitespace-nowrap">× {item.qty}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td className="p-4 font-black text-red-500 whitespace-nowrap">{formatPrice(order.total)}</td>
+                  <td className="p-4">
+                    <form action={updateStatus} className="flex items-center gap-2">
+                      <input type="hidden" name="id" value={order.id} />
+                      <select
+                        name="status"
+                        defaultValue={order.status}
+                        aria-label={`Trạng thái đơn ${order.code}`}
+                        className={`px-2.5 py-1.5 text-xs font-bold border bg-[#0a0a0a] cursor-pointer outline-none focus:border-red-600 ${st.badge}`}
+                      >
+                        {VALID_STATUS.map((s) => (
+                          <option key={s} value={s} className="bg-[#111] text-gray-200">{ORDER_STATUS[s].label}</option>
                         ))}
-                      </ul>
-                    </td>
-                    <td className="p-4 font-bold text-red-600 dark:text-red-400">{Number(order.total).toLocaleString('vi-VN')} đ</td>
-                    <td className="p-4">
-                      {/* Form cập nhật trạng thái */}
-                      <form action={updateStatus} className="flex items-center gap-2">
-                        <input type="hidden" name="id" value={order.id} />
-                        <select 
-                          name="status" 
-                          defaultValue={order.status}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border-none outline-none cursor-pointer ${currentStatus.color}`}
-                        >
-                          {Object.entries(STATUS_MAP).map(([key, value]) => (
-                            <option key={key} value={key} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                              {value.label}
-                            </option>
-                          ))}
-                        </select>
-                        <button type="submit" className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors">
-                          Lưu
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </select>
+                      <button type="submit" className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-red-800 hover:bg-red-700 border border-red-600 text-white transition-colors">
+                        Lưu
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-    </main>
+    </div>
   );
 }

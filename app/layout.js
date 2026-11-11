@@ -69,7 +69,7 @@ export default async function RootLayout({ children }) {
           strategy="afterInteractive" 
         />
         <Script 
-          src="https://files.bpcontent.cloud/2026/10/22/09/20261022095005-MVU5GTED.js" 
+          src="https://files.bpcontent.cloud/2026/11/10/15/20261110150010-LNBRJIJG.js" 
           strategy="afterInteractive" 
         />
         

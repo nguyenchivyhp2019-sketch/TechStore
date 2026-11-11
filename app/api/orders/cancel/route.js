@@ -6,7 +6,7 @@ const fail = (error, status) => NextResponse.json({ error }, { status });
 
 // Khách tự hủy đơn: cần đúng mã đơn + số điện thoại, và đơn còn ở trạng thái chờ xử lý
 export async function POST(request) {
-  if (rateLimited(request)) return fail("Bạn thao tác quá nhanh. Vui lòng thử lại sau 1 phút.", 429);
+  if (await rateLimited(request)) return fail("Bạn thao tác quá nhanh. Vui lòng thử lại sau 1 phút.", 429);
 
   let body;
   try {

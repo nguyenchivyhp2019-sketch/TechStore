@@ -5,7 +5,7 @@ const fail = (error, status) => NextResponse.json({ error }, { status });
 
 // Tra cứu đơn hàng bằng mã đơn + số điện thoại đặt hàng
 export async function POST(request) {
-  if (rateLimited(request)) return fail("Bạn thao tác quá nhanh. Vui lòng thử lại sau 1 phút.", 429);
+  if (await rateLimited(request)) return fail("Bạn thao tác quá nhanh. Vui lòng thử lại sau 1 phút.", 429);
 
   let body;
   try {

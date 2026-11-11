@@ -67,8 +67,10 @@ export default function CheckoutPage() {
 
       const data = await res.json();
 
-      // Token bị server từ chối -> về trang đăng nhập
+      // Token bị server từ chối -> xoá session hỏng rồi về trang đăng nhập
+      // (nếu không xoá, trang login thấy session cũ sẽ đẩy ngược về checkout)
       if (res.status === 401) {
+        await supabase.auth.signOut({ scope: "local" });
         router.push("/login?redirect=/checkout");
         return;
       }

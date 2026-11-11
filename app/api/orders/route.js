@@ -102,7 +102,7 @@ export async function POST(request) {
       .in("id", ids);
 
     if (productError) {
-      console.error("Không đọc được sản phẩm:", productError.code);
+      console.error("Không đọc được sản phẩm:", productError.code, productError.message);
       return fail("Không thể kiểm tra sản phẩm lúc này.", 500);
     }
 
@@ -185,7 +185,7 @@ export async function POST(request) {
       .single();
 
     if (orderError) {
-      console.error("Không lưu được đơn:", orderError.code);
+      console.error("Không lưu được đơn:", orderError.code, orderError.message);
       return fail("Không lưu được đơn hàng.", 500);
     }
 
@@ -201,7 +201,7 @@ export async function POST(request) {
       );
 
     if (itemsError) {
-      console.error("Không lưu được chi tiết đơn:", itemsError.code);
+      console.error("Không lưu được chi tiết đơn:", itemsError.code, itemsError.message);
 
       const { error: rollbackError } = await supabaseAdmin
         .from("orders")
@@ -287,8 +287,8 @@ export async function POST(request) {
       items: lines, // Trả về lines có chứa color để trang Checkout hiển thị
       make_status: makeStatus,
     });
-  } catch {
-    console.error("Lỗi ngoài dự kiến khi xử lý đơn hàng");
+  } catch (err) {
+    console.error("Lỗi ngoài dự kiến khi xử lý đơn hàng:", err?.message);
     return fail(
       "Có lỗi xử lý. Vui lòng kiểm tra đơn trong tài khoản trước khi thử lại.",
       500

@@ -5,11 +5,11 @@ import Footer from "./Footer";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
 import { getProducts, getCategories } from "@/lib/products";
-import Script from "next/script"; 
 import "./globals.css";
 
 // SỬ DỤNG ALIAS @/ THAY VÌ ĐƯỜNG DẪN TƯƠNG ĐỐI
 import HellEmbers from "./HellEmbers";
+import BotpressChat from "./BotpressChat";
 
 // Khôi phục font mặc định cho toàn trang
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -64,14 +64,7 @@ export default async function RootLayout({ children }) {
         </CartProvider>
 
         {/* Tích hợp Chatbot Botpress */}
-        <Script 
-          src="https://cdn.botpress.cloud/webchat/v3.7/inject.js" 
-          strategy="afterInteractive" 
-        />
-        <Script 
-          src="https://files.bpcontent.cloud/2026/10/22/09/20261022095005-MVU5GTED.js" 
-          strategy="afterInteractive" 
-        />
+        <BotpressChat />
         
       </body>
     </html>

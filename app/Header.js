@@ -28,7 +28,7 @@ const MENU_DATA = {
       {
         title: "Mua sắm theo Hãng",
         links: [
-          { name: "Apple", href: "/products?category=laptop&brand=Apple", subItems: [{ name: "MacBook Air", href: qLink("MacBook Air") }, { name: "MacBook Pro", href: qLink("MacBook Pro") }] },
+          { name: "Apple", href: "/products?category=laptop&brand=Apple"},
           { name: "ASUS", href: "/products?category=laptop&brand=ASUS" },
           { name: "Dell", href: "/products?category=laptop&brand=Dell" },
         ],

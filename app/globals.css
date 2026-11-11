@@ -1,23 +1,7 @@
 @import "tailwindcss";
 
 /* =========================================
-   1. CẤU HÌNH FONT CHỮ (DOOM 2016)
-   ========================================= */
-@font-face {
-  font-family: 'Doom2016';
-  src: url('/fonts/doom-2016.ttf') format('truetype'); /* Đảm bảo file nằm đúng thư mục public/fonts/ */
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@theme {
-  /* Chỉ tạo ra class font-doom, KHÔNG ghi đè font mặc định toàn trang */
-  --font-doom: "Doom2016", sans-serif; 
-}
-
-/* =========================================
-   2. CÁC HIỆU ỨNG ANIMATION
+   CÁC HIỆU ỨNG ANIMATION
    ========================================= */
 
 /* Hiệu ứng chuyển trang mượt mà giống Apple */
@@ -60,7 +44,7 @@
 }
 
 /* =========================================
-   3. TÙY CHỈNH THANH CUỘN
+   TÙY CHỈNH THANH CUỘN
    ========================================= */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

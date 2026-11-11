@@ -35,6 +35,8 @@ export async function POST(request) {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
+      // CẬP NHẬT 1: Thêm log chi tiết để dễ debug trên Vercel
+      console.error("getUser failed:", authError?.status, authError?.message);
       return fail("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.", 401);
     }
 
@@ -100,7 +102,7 @@ export async function POST(request) {
       .in("id", ids);
 
     if (productError) {
-console.error("Không đọc được sản phẩm:", productError.code);
+      console.error("Không đọc được sản phẩm:", productError.code);
       return fail("Không thể kiểm tra sản phẩm lúc này.", 500);
     }
 
@@ -144,12 +146,14 @@ console.error("Không đọc được sản phẩm:", productError.code);
         return fail(`${product.name} chưa có giá hợp lệ.`, 400);
       }
 
+      // CẬP NHẬT 2: Thêm color vào mảng lines
       lines.push({
         product_id: product.id,
         product_name: product.name,
         variant_label: label,
         price,
         qty: Number(item.qty),
+        color: typeof item.color === "string" ? item.color.slice(0, 50) : null,
       });
     }
 
@@ -185,10 +189,12 @@ console.error("Không đọc được sản phẩm:", productError.code);
       return fail("Không lưu được đơn hàng.", 500);
     }
 
+    // CẬP NHẬT 3: Tách color ra khỏi line khi insert vào database 
+    // (để tránh lỗi nếu bảng order_items chưa có cột color)
     const { error: itemsError } = await supabaseAdmin
       .from("order_items")
       .insert(
-        lines.map((line) => ({
+        lines.map(({ color, ...line }) => ({
           ...line,
           order_id: order.id,
         }))
@@ -216,7 +222,7 @@ console.error("Không đọc được sản phẩm:", productError.code);
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
-hour12: false,
+      hour12: false,
     }).format(new Date());
 
     // Giữ tên trường tương ứng với các biến đang dùng trong Make
@@ -278,7 +284,7 @@ hour12: false,
     return NextResponse.json({
       code: order.code,
       total,
-      items: lines,
+      items: lines, // Trả về lines có chứa color để trang Checkout hiển thị
       make_status: makeStatus,
     });
   } catch {

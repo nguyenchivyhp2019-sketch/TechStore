@@ -51,7 +51,7 @@ export default async function ProductPage({ params }) {
         {/* Cột phải: Thông tin mua hàng */}
         <FadeIn delay={0.2}>
           <div className="flex flex-col pt-4">
-            {p.brand && <p className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2 italic">// {p.brand} //</p>}
+            {p.brand && <p className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2 italic">{"// "}{p.brand}{" //"}</p>}
             
             <h1 className="text-4xl md:text-5xl font-black mb-4 text-white uppercase italic tracking-tighter leading-tight drop-shadow-md">
               {p.name}
